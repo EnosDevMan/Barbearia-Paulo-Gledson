@@ -17,8 +17,8 @@ interface BarberProfileEditModalProps {
  * Campos administrativos (ativo/inativo, chave PIX, horário, ordem de
  * exibição, vínculo com usuário) continuam só no painel Admin —
  * inclusive protegidos no banco pela trigger `protect_barber_updates`
- * (migration 0009), então mesmo chamando `updateBarber` com o objeto
- * completo do barbeiro, só estes 4 campos realmente são gravados.
+ * (ver supabase/schema.sql), então mesmo chamando `updateBarber` com o
+ * objeto completo do barbeiro, só estes 4 campos realmente são gravados.
  */
 export const BarberProfileEditModal: React.FC<BarberProfileEditModalProps> = ({
   barber,

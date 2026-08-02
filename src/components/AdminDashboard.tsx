@@ -2,6 +2,7 @@
 import React from 'react';
 import { CheckCircle, AlertCircle, Menu, X, ArrowLeft, LogOut, BarChart3 } from 'lucide-react';
 import { withRoleGuard } from '../auth/middleware/withRoleGuard';
+import { getCompactDisplayName } from '../utils/displayName';
 import { useAdminDashboard } from '../features/admin/hooks/useAdminDashboard';
 import { AdminOverviewTab } from '../features/admin/components/AdminOverviewTab';
 import { AdminReportsTab } from '../features/admin/components/AdminReportsTab';
@@ -36,6 +37,8 @@ const AdminDashboardInner: React.FC<AdminDashboardProps> = ({ onLogout, onNaviga
     formatBRL,
     navItems
   } = useAdminDashboard();
+
+  const compactUserName = currentUser ? getCompactDisplayName(currentUser.name) : '';
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-100 to-slate-200">
@@ -86,8 +89,8 @@ const AdminDashboardInner: React.FC<AdminDashboardProps> = ({ onLogout, onNaviga
               {currentUser?.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-white text-sm">{currentUser?.name}</p>
-              <p className="text-xs text-slate-400">{currentUser?.email}</p>
+              <p className="font-bold text-white text-sm truncate">{compactUserName}</p>
+              <p className="text-xs text-slate-400 truncate">{currentUser?.email}</p>
             </div>
           </div>
           <button
@@ -274,8 +277,8 @@ const AdminDashboardInner: React.FC<AdminDashboardProps> = ({ onLogout, onNaviga
                   {currentUser?.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-white text-sm">{currentUser?.name}</p>
-                  <p className="text-xs text-slate-400">{currentUser?.email}</p>
+                  <p className="font-bold text-white text-sm truncate">{compactUserName}</p>
+                  <p className="text-xs text-slate-400 truncate">{currentUser?.email}</p>
                 </div>
               </div>
               <button

@@ -5,14 +5,12 @@ import { formatBRL } from '../../../utils/validation';
 interface BarberHistoryProps {
   pastBookings: Booking[];
   getServiceName: (id: string) => string;
-  getServicePrice: (id: string) => number;
   getStatusBadgeColor: (status: BookingStatus) => string;
 }
 
 export const BarberHistory: React.FC<BarberHistoryProps> = ({
   pastBookings,
   getServiceName,
-  getServicePrice,
   getStatusBadgeColor
 }) => {
   return (
@@ -28,7 +26,11 @@ export const BarberHistory: React.FC<BarberHistoryProps> = ({
                 <p className="font-bold text-slate-900">{getServiceName(booking.serviceId)}</p>
                 <span className="font-mono font-bold text-slate-400 text-[10px]">{booking.date}</span>
               </div>
-              <p className="text-slate-400 mt-1 leading-snug">Cliente: {booking.customerName} • {formatBRL(getServicePrice(booking.serviceId))}</p>
+              {/* booking.value é o valor histórico real (congelado no
+                  momento do agendamento) — evita mostrar um valor diferente
+                  do que foi de fato cobrado caso o preço do serviço tenha
+                  mudado (ou o serviço tenha sido excluído) depois. */}
+              <p className="text-slate-400 mt-1 leading-snug">Cliente: {booking.customerName} • {formatBRL(booking.value)}</p>
               <span className={`inline-block mt-1 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${getStatusBadgeColor(booking.status)}`}>
                 {booking.status}
               </span>

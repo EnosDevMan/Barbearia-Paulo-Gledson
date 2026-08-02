@@ -83,22 +83,27 @@ export const useBarberDashboard = () => {
   }, [barberBookings]);
 
   const todayBookings = sortedBookings.filter(b => b.date === todayStr);
-  const futureBookings = sortedBookings.filter(b => b.date > todayStr);
-  const pastBookings = sortedBookings.filter(b => b.date < todayStr);
+  // "Cancelado" fica de fora destas duas listas: não há nada a fazer numa
+  // reserva futura cancelada, e um cancelamento não é um "trabalho
+  // realizado" no histórico. Continua existindo na base de dados/relatórios
+  // do admin, só não polui a visão operacional do dia a dia do barbeiro.
+  const futureBookings = sortedBookings.filter(b => b.date > todayStr && b.status !== 'Cancelado');
+  const pastBookings = sortedBookings.filter(b => b.date < todayStr && b.status !== 'Cancelado');
 
   const completedToday = todayBookings.filter(b => b.status === 'Concluído').length;
   const pendingToday = todayBookings.filter(b => b.status === 'Confirmado' || b.status === 'Em atendimento' || b.status === 'Aguardando pagamento').length;
 
   const getServiceName = (id: string) => getSharedServiceName(services, id);
 
-  const getServicePrice = (id: string) => {
-    if (!id) return 0;
-    return id.split(',').reduce((sum, subId) => sum + (services.find(s => s.id === subId.trim())?.price || 0), 0);
-  };
-
+  // Usa `booking.value` (o valor efetivamente cobrado, congelado no momento
+  // do agendamento) em vez de recalcular pelo preço ATUAL do serviço — o
+  // mesmo padrão já usado nos relatórios do admin (useAdminReports.ts).
+  // Antes, se o preço de um serviço mudasse (ou o serviço fosse excluído),
+  // todo o histórico de faturamento do barbeiro mudava retroativamente e
+  // podia ficar diferente do relatório oficial do admin.
   const totalEarnings = barberBookings
     .filter(b => b.status === 'Concluído')
-    .reduce((sum, b) => sum + getServicePrice(b.serviceId), 0);
+    .reduce((sum, b) => sum + b.value, 0);
 
   const isSameDay = (dateStr: string) => dateStr === todayStr;
   const isThisWeek = (dateStr: string) => {
@@ -132,24 +137,25 @@ export const useBarberDashboard = () => {
 
   const serviceStats: { [serviceId: string]: { name: string; count: number; totalValue: number } } = {};
   let totalPeriodValue = 0;
-  
+
   periodBookings.forEach(booking => {
     if (!booking.serviceId) return;
-    const sIds = booking.serviceId.split(',').map(id => id.trim());
+    const sIds = booking.serviceId.split(',').map(id => id.trim()).filter(Boolean);
+    if (sIds.length === 0) return;
+    // Quando o agendamento combina mais de um serviço, dividimos o valor
+    // (histórico, real) igualmente entre eles para a soma do detalhamento
+    // continuar batendo com o faturamento total do período — mesmo padrão
+    // usado em useAdminReports.ts (serviceBreakdown).
+    const share = booking.value / sIds.length;
     sIds.forEach(id => {
       const serviceObj = services.find(s => s.id === id);
-      if (serviceObj) {
-        if (!serviceStats[id]) {
-          serviceStats[id] = {
-            name: serviceObj.name,
-            count: 0,
-            totalValue: 0
-          };
-        }
-        serviceStats[id].count += 1;
-        serviceStats[id].totalValue += serviceObj.price;
-        totalPeriodValue += serviceObj.price;
+      const name = serviceObj?.name || getServiceName(id);
+      if (!serviceStats[id]) {
+        serviceStats[id] = { name, count: 0, totalValue: 0 };
       }
+      serviceStats[id].count += 1;
+      serviceStats[id].totalValue += share;
+      totalPeriodValue += share;
     });
   });
 
@@ -230,7 +236,6 @@ export const useBarberDashboard = () => {
     getFormattedDate,
     getWhatsAppLink,
     getServiceName,
-    getServicePrice,
     formatBRL,
     config,
     barberBookings,

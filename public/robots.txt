@@ -5,3 +5,5 @@
 User-agent: *
 Allow: /
 
+Sitemap: https://barbeariapaulogledson.vercel.app/sitemap.xml
+

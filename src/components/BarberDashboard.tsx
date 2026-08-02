@@ -30,7 +30,6 @@ const BarberDashboardInner: React.FC = () => {
     getFormattedDate,
     getWhatsAppLink,
     getServiceName,
-    getServicePrice,
     formatBRL,
     config,
     barberBookings,
@@ -216,7 +215,6 @@ const BarberDashboardInner: React.FC = () => {
             <BarberHistory
               pastBookings={pastBookings}
               getServiceName={getServiceName}
-              getServicePrice={getServicePrice}
               getStatusBadgeColor={getStatusBadgeColor}
             />
           </section>

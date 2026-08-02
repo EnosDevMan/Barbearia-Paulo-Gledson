@@ -83,13 +83,14 @@ ser exibida para algum cliente real, avise-o.
 
 ## Configuração no painel do Supabase (fora do código, fácil de esquecer)
 
-- **Authentication → URL Configuration**: defina o **Site URL** para o
-  domínio real de produção, e adicione esse mesmo domínio em **Redirect
-  URLs**. O código já envia explicitamente a origem da página atual como
-  destino do redirecionamento (`emailRedirectTo`/`redirectTo`), mas o
-  Supabase só aceita se o domínio estiver nessa lista — por padrão, num
-  projeto novo, isso aponta para `localhost` e os links de confirmação de
-  e-mail/recuperação de senha ficam quebrados em produção até isso ser
+- **Domínio de produção: `https://barbeariapaulogledson.vercel.app`**
+- **Authentication → URL Configuration**: defina o **Site URL** como
+  `https://barbeariapaulogledson.vercel.app` e adicione a mesma URL em
+  **Redirect URLs**. O código já envia explicitamente a origem da página
+  atual como destino do redirecionamento (`emailRedirectTo`/`redirectTo`),
+  mas o Supabase só aceita se o domínio estiver nessa lista — por padrão,
+  num projeto novo, isso aponta para `localhost` e os links de confirmação
+  de e-mail/recuperação de senha ficam quebrados em produção até isso ser
   corrigido.
 - **Authentication → Email Templates**: os e-mails padrão do Supabase
   (confirmação de cadastro, recuperação de senha) vêm em inglês, com
