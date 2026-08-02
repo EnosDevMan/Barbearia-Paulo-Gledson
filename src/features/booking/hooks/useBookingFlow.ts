@@ -1,19 +1,20 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../../store/useApp';
 import { Service, Barber, Booking } from '../../../types';
-import { getBarbershopTodayStr, validateEmail, validatePhoneBR } from '../../../utils/validation';
+import { getBarbershopTodayStr, validatePhoneBR } from '../../../utils/validation';
 import { getErrorMessage } from '../../../utils/errors';
 
-export const useBookingFlow = (onSuccess?: (bookingId: string) => void) => {
-  const { services, barbers: allBarbers, config, currentUser, getAvailableSlots, addBooking } = useApp();
+export const useBookingFlow = (onSuccess?: (bookingId: string) => void, initialServiceId?: string, initialBarberId?: string) => {
+  const { services: allServices, barbers: allBarbers, config, currentUser, getAvailableSlots, addBooking } = useApp();
   // Barbeiros desativados (active=false) não podem ser selecionados no
   // fluxo público de agendamento — antes, "desativar" um barbeiro não
   // tinha nenhum efeito aqui e ele continuava aparecendo para reserva.
+  const services = useMemo(() => allServices.filter(s => s.active !== false), [allServices]);
   const barbers = useMemo(() => allBarbers.filter(b => b.active !== false), [allBarbers]);
 
   const [step, setStep] = useState(1);
-  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
-  const [selectedBarber, setSelectedBarber] = useState<Barber | null>(null);
+  const [selectedServices, setSelectedServices] = useState<Service[]>(() => allServices.filter(s => s.active !== false && s.id === initialServiceId));
+  const [selectedBarber, setSelectedBarber] = useState<Barber | null>(() => allBarbers.find(b => b.active !== false && b.id === initialBarberId) || null);
 
   const [selectedDate, setSelectedDate] = useState<string>(getBarbershopTodayStr);
   const [selectedTime, setSelectedTime] = useState<string>('');
@@ -22,7 +23,6 @@ export const useBookingFlow = (onSuccess?: (bookingId: string) => void) => {
 
   const [custName, setCustName] = useState('');
   const [custPhone, setCustPhone] = useState('');
-  const [custEmail, setCustEmail] = useState('');
   const [notes, setNotes] = useState('');
   
   const [errorMsg, setErrorMsg] = useState('');
@@ -56,7 +56,6 @@ export const useBookingFlow = (onSuccess?: (bookingId: string) => void) => {
   useEffect(() => {
     if (currentUser) {
       setCustName(currentUser.name);
-      setCustEmail(currentUser.email);
       setCustPhone(currentUser.phone || '');
     }
   }, [currentUser]);
@@ -117,19 +116,13 @@ export const useBookingFlow = (onSuccess?: (bookingId: string) => void) => {
     const effectiveName = currentUser?.name?.trim() || custName.trim();
     const effectivePhone = currentUser?.phone?.trim() || custPhone.trim();
 
-    if (!effectiveName || !effectivePhone || (!currentUser && !custEmail.trim())) {
+    if (!effectiveName || !effectivePhone) {
       setErrorMsg('Por favor, preencha todos os seus dados.');
       return;
     }
     if (!validatePhoneBR(effectivePhone)) {
       setErrorMsg('Por favor, insira um telefone válido, com DDD.');
       return;
-    }
-    if (!currentUser) {
-      if (!validateEmail(custEmail)) {
-        setErrorMsg('Por favor, insira um email válido.');
-        return;
-      }
     }
 
     try {
@@ -210,7 +203,6 @@ export const useBookingFlow = (onSuccess?: (bookingId: string) => void) => {
     
     custName, setCustName,
     custPhone, setCustPhone,
-    custEmail, setCustEmail,
     notes, setNotes,
     
     errorMsg,

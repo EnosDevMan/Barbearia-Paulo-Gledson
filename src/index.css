@@ -72,3 +72,16 @@ body {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+
+html, body, #root { max-width: 100%; overflow-x: clip; }
+button, a, input, textarea, select { touch-action: manipulation; }
+.services-rail { scroll-behavior: smooth; overscroll-behavior-inline: contain; touch-action: pan-x pan-y; scrollbar-width: thin; }
+.service-card { width: 86.956%; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+:focus-visible { outline: 2px solid #c9975b; outline-offset: 3px; }
+@media (min-width: 640px) { .service-card { width: calc(50% - .5rem); } }
+@media (min-width: 1024px) { .service-card { width: calc(33.333% - .667rem); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

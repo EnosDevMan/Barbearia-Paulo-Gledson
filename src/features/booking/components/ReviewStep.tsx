@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, Barber, Service } from '../../../types';
-import { User as UserIcon, Phone, Mail, FileText } from 'lucide-react';
+import { User as UserIcon, Phone, FileText } from 'lucide-react';
 import { formatBRL } from '../../../utils/validation';
 
 interface Props {
@@ -9,8 +9,6 @@ interface Props {
   setCustName: (name: string) => void;
   custPhone: string;
   setCustPhone: (phone: string) => void;
-  custEmail: string;
-  setCustEmail: (email: string) => void;
   notes: string;
   setNotes: (notes: string) => void;
   selectedBarber: Barber | null;
@@ -25,7 +23,6 @@ export const ReviewStep: React.FC<Props> = ({
   currentUser,
   custName, setCustName,
   custPhone, setCustPhone,
-  custEmail, setCustEmail,
   notes, setNotes,
   selectedBarber,
   selectedServices,
@@ -97,7 +94,7 @@ export const ReviewStep: React.FC<Props> = ({
                     placeholder="Informe seu WhatsApp com DDD"
                     value={custPhone}
                     onChange={(e) => setCustPhone(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base"
                   />
                   <Phone size={16} className="absolute left-3.5 top-3 text-slate-400" />
                 </div>
@@ -112,33 +109,14 @@ export const ReviewStep: React.FC<Props> = ({
                 placeholder="Seu nome completo"
                 value={custName}
                 onChange={(e) => setCustName(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base"
               />
               <UserIcon size={16} className="absolute left-3.5 top-3 text-slate-400" />
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
-              <div className="relative">
-                <input
-                  type="email"
-                  placeholder="Seu E-mail"
-                  value={custEmail}
-                  onChange={(e) => setCustEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-                <Mail size={16} className="absolute left-3.5 top-3 text-slate-400" />
-              </div>
-              
-              <div className="relative">
-                <input
-                  type="tel"
-                  placeholder="Seu WhatsApp"
-                  value={custPhone}
-                  onChange={(e) => setCustPhone(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
-                />
-                <Phone size={16} className="absolute left-3.5 top-3 text-slate-400" />
-              </div>
+            <div className="relative">
+              <input type="tel" inputMode="tel" autoComplete="tel" aria-label="WhatsApp com DDD" placeholder="Seu WhatsApp com DDD" value={custPhone} onChange={(e) => setCustPhone(e.target.value)} className="w-full min-h-12 pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-base" />
+              <Phone size={16} className="absolute left-3.5 top-4 text-slate-400" />
             </div>
           </div>
         )}

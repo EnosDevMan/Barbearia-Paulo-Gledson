@@ -1,65 +1,17 @@
-import React from 'react';
-import { Sparkle, Scissors } from 'lucide-react';
+import React, { useState } from 'react';
+import { Scissors, UserRound } from 'lucide-react';
 import { Barber } from '../../../types';
 
-interface BarbersSectionProps {
-  activeBarbers: Barber[];
-  onStartBooking: () => void;
-}
-
-export const BarbersSection: React.FC<BarbersSectionProps> = ({ activeBarbers, onStartBooking }) => {
-  if (activeBarbers.length === 0) return null;
-
-  return (
-    <section id="barbers-section" className="py-24 bg-slate-100 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-20 max-w-xl mx-auto">
-          <div className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
-            <Sparkle size={12} className="text-indigo-500 animate-spin-slow" /> ARTISTAS DA TESOURA
-          </div>
-          <h2 className="text-3xl md:text-5xl font-black text-slate-950 font-sans tracking-tight">
-            Barbeiros Especialistas
-          </h2>
-          <p className="text-slate-500 text-sm sm:text-base mt-4 leading-relaxed">
-            Conheça os profissionais que transformarão seu estilo. Cada profissional tem foco em alta precisão e visagismo moderno.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
-          {activeBarbers.map(barber => (
-            <div
-              key={barber.id}
-              className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md hover:border-slate-200 border border-slate-100 transition-all duration-300 flex flex-col items-center p-6 text-center group"
-            >
-              <div className="relative mb-6">
-                <div className="absolute inset-0 bg-indigo-500/10 rounded-full scale-105 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"></div>
-                <img
-                  src={barber.avatar}
-                  alt={barber.name}
-                  referrerPolicy="no-referrer"
-                  className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-slate-50 shadow-md relative z-10 transition-transform duration-300 group-hover:scale-105"
-                />
-                <span className="absolute bottom-2 right-2 w-4.5 h-4.5 bg-emerald-500 border-4 border-white rounded-full z-20"></span>
-              </div>
-              <h4 className="text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                {barber.name}
-              </h4>
-              <p className="text-indigo-600 text-xs font-bold uppercase tracking-widest mt-1.5 bg-indigo-50 px-3 py-1 rounded-full">
-                {barber.specialty}
-              </p>
-              
-              <p className="text-xs text-slate-400 mt-4 leading-relaxed line-clamp-2 max-w-xs">
-                Especialista em visagismo facial, barbas modeladas e cortes sob medida de última tendência.
-              </p>
-              <button
-                onClick={onStartBooking}
-                className="w-full mt-6 bg-slate-950 hover:bg-indigo-600 text-white py-3 px-4 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm group-hover:shadow"
-              >
-                <Scissors size={14} /> Agendar com {barber.name.split(' ')[0]}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+export const BarbersSection: React.FC<{ activeBarbers: Barber[]; onSelectBarber: (id: string) => void }> = ({ activeBarbers, onSelectBarber }) => {
+  const [failed, setFailed] = useState<Record<string, boolean>>({});
+  if (!activeBarbers.length) return null;
+  return <section id="barbers-section" className="bg-[#f7f4ee] px-4 py-14 sm:py-16 lg:py-20"><div className="mx-auto max-w-6xl">
+    <p className="text-xs font-bold uppercase tracking-[.16em] text-[#9a6738]">Equipe</p><h2 className="mt-2 text-3xl font-black tracking-tight text-[#07182b] sm:text-4xl">Quem cuida do seu visual</h2>
+    <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{activeBarbers.map(barber => <article key={barber.id} className="flex min-w-0 flex-col border border-slate-200 bg-white p-4">
+      <div className="flex min-w-0 items-center gap-4">{barber.avatar && !failed[barber.id] ? <img src={barber.avatar} alt={`Foto de ${barber.name}`} width="72" height="72" loading="lazy" onError={() => setFailed(v => ({ ...v, [barber.id]: true }))} className="size-[72px] shrink-0 rounded-full object-cover"/> : <div className="grid size-[72px] shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500" aria-hidden="true"><UserRound size={30}/></div>}
+      <div className="min-w-0"><h3 className="break-words text-lg font-extrabold text-[#07182b]">{barber.name}</h3><p className="mt-1 break-words text-sm font-semibold text-[#9a6738]">{barber.specialty}</p></div></div>
+      {barber.description && <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">{barber.description}</p>}
+      <button onClick={() => onSelectBarber(barber.id)} className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 border border-[#07182b] px-3 py-3 text-sm font-bold text-[#07182b] hover:bg-[#07182b] hover:text-white"><Scissors size={16}/>Agendar com {barber.name}</button>
+    </article>)}</div>
+  </div></section>;
 };

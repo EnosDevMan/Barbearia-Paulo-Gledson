@@ -1,72 +1,11 @@
 import React from 'react';
-import { Camera, Instagram } from 'lucide-react';
+import { Instagram } from 'lucide-react';
 import { GalleryPhoto, BarbershopConfig } from '../../../types';
-
-interface GallerySectionProps {
-  galleryPhotos: GalleryPhoto[];
-  config: BarbershopConfig;
-}
-
-/**
- * Galeria de cortes realizados, exibida na home. Fotos vêm do upload feito
- * pelo admin (painel > Galeria) — ver AdminGalleryTab e migration
- * 0008_gallery_photos. A seção some por completo quando não há nenhuma
- * foto cadastrada, para não deixar um espaço vazio na página.
- */
-export const GallerySection: React.FC<GallerySectionProps> = ({ galleryPhotos, config }) => {
-  if (galleryPhotos.length === 0) return null;
-
-  const instagramUrl = config.socialLinks?.instagram;
-
-  return (
-    <section id="gallery-section" className="py-24 px-4 bg-white">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-16 max-w-xl mx-auto">
-          <div className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
-            <Camera size={12} className="text-indigo-600" /> NOSSOS TRABALHOS
-          </div>
-          <h2 className="text-3xl md:text-5xl font-black text-slate-900 font-sans tracking-tight">
-            Cortes Realizados
-          </h2>
-          <p className="text-slate-500 text-sm sm:text-base mt-4 leading-relaxed">
-            Alguns dos trabalhos feitos aqui na barbearia.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-          {galleryPhotos.slice(0, 12).map(photo => (
-            <div
-              key={photo.id}
-              className="group relative aspect-square rounded-2xl overflow-hidden bg-slate-200 shadow-sm"
-            >
-              <img
-                src={photo.imageUrl}
-                alt={photo.caption || 'Corte realizado na barbearia'}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
-              />
-              {photo.caption && (
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p className="text-white text-xs font-semibold line-clamp-2">{photo.caption}</p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {instagramUrl && (
-          <div className="text-center mt-10">
-            <a
-              href={instagramUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md transition-all active:scale-[0.98]"
-            >
-              <Instagram size={16} /> Ver mais no Instagram
-            </a>
-          </div>
-        )}
-      </div>
-    </section>
-  );
+export const GallerySection: React.FC<{ galleryPhotos: GalleryPhoto[]; config: BarbershopConfig }> = ({ galleryPhotos, config }) => {
+ if (!galleryPhotos.length) return null;
+ return <section id="gallery-section" className="bg-white px-4 py-14 sm:py-16 lg:py-20"><div className="mx-auto max-w-6xl">
+  <p className="text-xs font-bold uppercase tracking-[.16em] text-[#9a6738]">Galeria</p><h2 className="mt-2 text-3xl font-black tracking-tight text-[#07182b] sm:text-4xl">Trabalhos da casa</h2>
+  <div className="mt-7 grid grid-cols-2 grid-rows-2 gap-2 sm:grid-cols-4 sm:gap-3">{galleryPhotos.slice(0, 5).map((photo, index) => <figure key={photo.id} className={`relative overflow-hidden bg-slate-100 ${index === 0 ? 'col-span-2 row-span-2 aspect-[4/3] sm:aspect-auto' : 'aspect-square'}`}><img src={photo.imageUrl} alt={photo.caption || 'Trabalho realizado na barbearia'} width="640" height="640" loading="lazy" className="h-full w-full object-cover"/>{photo.caption && <figcaption className="absolute inset-x-0 bottom-0 bg-black/65 p-2 text-xs text-white">{photo.caption}</figcaption>}</figure>)}</div>
+  {config.socialLinks.instagram && <a href={config.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex min-h-11 items-center gap-2 font-bold text-[#07182b] underline decoration-[#c9975b] decoration-2 underline-offset-4"><Instagram size={18}/>Ver mais no Instagram</a>}
+ </div></section>;
 };

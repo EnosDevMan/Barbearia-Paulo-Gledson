@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Calendar, Scissors, LogIn, LogOut, Menu, X, ToggleLeft } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Calendar, Scissors, LogIn, LogOut, Menu, X } from 'lucide-react';
 import { useApp } from '../store/useApp';
 import { UserRole } from '../types';
 import { getCompactDisplayName } from '../utils/displayName';
@@ -13,6 +13,11 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenLogin }) => {
   const { currentUser, logout, config } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useEffect(() => {
+    const closeAtDesktop = () => { if (window.innerWidth >= 768) setMobileMenuOpen(false); };
+    window.addEventListener('resize', closeAtDesktop);
+    return () => window.removeEventListener('resize', closeAtDesktop);
+  }, []);
   const compactUserName = currentUser ? getCompactDisplayName(currentUser.name) : '';
 
   const getRoleBadge = (role: UserRole) => {
@@ -31,12 +36,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
     <header className="bg-slate-900 text-slate-100 border-b border-slate-800 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('landing')}>
+          <button aria-label="Ir para o início" className="flex min-w-0 items-center gap-2 text-left" onClick={() => onNavigate('landing')}>
             <div className="bg-indigo-600 p-2 rounded-xl">
               <Scissors size={20} className="text-white" />
             </div>
             <span className="text-xl font-black tracking-tight">{config?.name || 'Barbearia'}</span>
-          </div>
+          </button>
 
           <div className="hidden md:flex items-center gap-6">
             <button onClick={() => onNavigate('landing')} className={`text-sm font-semibold transition-colors ${currentPage === 'landing' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}>
@@ -102,7 +107,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
           <div className="md:hidden flex items-center gap-2">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 bg-slate-800 rounded-lg text-slate-300 hover:text-white"
+              aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={mobileMenuOpen} className="grid size-11 place-items-center bg-slate-800 rounded-lg text-slate-300 hover:text-white"
             >
               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -114,13 +119,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
         <div className="md:hidden bg-slate-950 border-t border-slate-800 py-3 px-4 space-y-2">
           <button
             onClick={() => { onNavigate('landing'); setMobileMenuOpen(false); }}
-            className="w-full text-left py-2 px-3 rounded-lg text-sm text-slate-200 hover:bg-white/5"
+            className="min-h-11 w-full text-left py-2 px-3 rounded-lg text-sm text-slate-200 hover:bg-white/5"
           >
             Início
           </button>
           <button
             onClick={() => { onNavigate('booking'); setMobileMenuOpen(false); }}
-            className="w-full text-left py-2 px-3 rounded-lg text-sm bg-indigo-600 text-white font-medium flex items-center gap-1.5"
+            className="min-h-11 w-full text-left py-2 px-3 rounded-lg text-sm bg-indigo-600 text-white font-medium flex items-center gap-1.5"
           >
             <Calendar size={14} /> Agendar Online
           </button>
@@ -129,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
               {currentUser.role === 'customer' && (
                 <button
                   onClick={() => { onNavigate('customer'); setMobileMenuOpen(false); }}
-                  className="w-full text-left py-2 px-3 rounded-lg text-sm text-slate-200 hover:bg-white/5"
+                  className="min-h-11 w-full text-left py-2 px-3 rounded-lg text-sm text-slate-200 hover:bg-white/5"
                 >
                   Meus Agendamentos
                 </button>
@@ -137,7 +142,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
               {currentUser.role === 'barber' && (
                 <button
                   onClick={() => { onNavigate('barber'); setMobileMenuOpen(false); }}
-                  className="w-full text-left py-2 px-3 rounded-lg text-sm text-slate-200 hover:bg-white/5"
+                  className="min-h-11 w-full text-left py-2 px-3 rounded-lg text-sm text-slate-200 hover:bg-white/5"
                 >
                   Minha Agenda
                 </button>
@@ -145,7 +150,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
               {currentUser.role === 'admin' && (
                 <button
                   onClick={() => { onNavigate('admin'); setMobileMenuOpen(false); }}
-                  className="w-full text-left py-2 px-3 rounded-lg text-sm text-slate-200 hover:bg-white/5"
+                  className="min-h-11 w-full text-left py-2 px-3 rounded-lg text-sm text-slate-200 hover:bg-white/5"
                 >
                   Painel Gerencial
                 </button>

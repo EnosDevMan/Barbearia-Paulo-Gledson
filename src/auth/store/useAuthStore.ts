@@ -17,7 +17,7 @@ interface AuthState {
   passwordRecoveryMode: boolean;
   initialize: () => () => void;
   login: (credentials: LoginCredentials) => Promise<boolean>;
-  register: (payload: RegisterPayload) => Promise<boolean>;
+  register: (payload: RegisterPayload) => Promise<'authenticated' | 'confirmation' | false>;
   logout: () => Promise<void>;
   completePasswordRecovery: () => void;
 }
@@ -126,7 +126,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       loading: false,
       error: null,
     });
-    return !!session;
+    return session ? 'authenticated' : 'confirmation';
   },
 
   logout: async () => {

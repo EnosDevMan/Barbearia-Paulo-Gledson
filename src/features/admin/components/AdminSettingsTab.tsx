@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Scissors, Sparkles, Award, ChevronDown } from 'lucide-react';
+import { Save, ChevronDown } from 'lucide-react';
 import { useApp } from '../../../store/useApp';
 import { getErrorMessage } from '../../../utils/errors';
 import { parseBRNumber } from '../../../utils/validation';
@@ -90,7 +90,6 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
   const [confHeroSubtitle, setConfHeroSubtitle] = useState(config.heroSubtitle || '');
   const [confHeroDescription, setConfHeroDescription] = useState(config.heroDescription || '');
   const [confAboutText, setConfAboutText] = useState(config.aboutText || '');
-  const [confLogo, setConfLogo] = useState(config.logo || 'scissors');
 
   // Estado para abas expansíveis (mobile)
   const [expandedSection, setExpandedSection] = useState<string | null>('basic');
@@ -126,7 +125,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
         heroSubtitle: confHeroSubtitle,
         heroDescription: confHeroDescription,
         aboutText: confAboutText,
-        logo: confLogo
+        logo: 'scissors'
       });
       showFeedback('Configurações salvas com sucesso!', false);
     } catch (err) {
@@ -170,32 +169,6 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
               />
             </div>
             
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Ícone Principal (Logo)</label>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { value: 'scissors', icon: Scissors, label: 'Tesoura' },
-                  { value: 'razor', icon: Sparkles, label: 'Estilo' },
-                  { value: 'beard', icon: Award, label: 'Prêmio' }
-                ].map(({ value, icon: Icon, label }) => (
-                  <button 
-                    key={value}
-                    type="button" 
-                    onClick={() => setConfLogo(value)}
-                    className={`p-3 rounded-lg border-2 flex flex-col items-center justify-center gap-1.5 transition-all ${
-                      confLogo === value 
-                        ? 'border-slate-900 bg-slate-50 text-slate-900' 
-                        : 'border-slate-200 text-slate-400 hover:border-slate-300'
-                    }`}
-                    title={label}
-                  >
-                    <Icon size={20} />
-                    <span className="text-[10px] font-bold">{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Endereço Completo</label>
               <input 
