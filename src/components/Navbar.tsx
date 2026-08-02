@@ -33,11 +33,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
   };
 
   return (
-    <header className="bg-slate-900 text-slate-100 border-b border-slate-800 sticky top-0 z-40">
+    <header className="bg-brand-navy text-slate-100 border-b border-white/10 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <button aria-label="Ir para o início" className="flex min-w-0 items-center gap-2 text-left" onClick={() => onNavigate('landing')}>
-            <div className="bg-indigo-600 p-2 rounded-xl">
+            <div className="bg-brand-copper p-2 rounded-xl">
               <Scissors size={20} className="text-white" />
             </div>
             <span className="text-xl font-black tracking-tight">{config?.name || 'Barbearia'}</span>
@@ -47,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
             <button onClick={() => onNavigate('landing')} className={`text-sm font-semibold transition-colors ${currentPage === 'landing' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}>
               Início
             </button>
-            <button onClick={() => onNavigate('booking')} className={`text-sm font-semibold transition-colors flex items-center gap-1.5 ${currentPage === 'booking' ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'}`}>
+            <button onClick={() => onNavigate('booking')} className={`text-sm font-semibold transition-colors flex items-center gap-1.5 ${currentPage === 'booking' ? 'text-brand-copper' : 'text-slate-400 hover:text-slate-200'}`}>
               <Calendar size={16} /> Agendar
             </button>
 
@@ -97,7 +97,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
               <button
                 id="login-btn-nav"
                 onClick={onOpenLogin}
-                className="bg-indigo-600 text-white font-semibold text-sm px-4 py-2 rounded-lg hover:bg-indigo-500 transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
+                className="bg-brand-copper text-brand-navy font-semibold text-sm px-4 py-2 rounded-lg hover:bg-brand-copper-light transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
               >
                 <LogIn size={16} /> Entrar
               </button>
@@ -107,7 +107,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
           <div className="md:hidden flex items-center gap-2">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={mobileMenuOpen} className="grid size-11 place-items-center bg-slate-800 rounded-lg text-slate-300 hover:text-white"
+              aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={mobileMenuOpen} className="grid size-11 place-items-center bg-brand-navy-soft rounded-lg text-slate-300 hover:text-white"
             >
               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -116,7 +116,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
       </div>
 
       {mobileMenuOpen && (
-        <div className="md:hidden bg-slate-950 border-t border-slate-800 py-3 px-4 space-y-2">
+        <div className="md:hidden bg-brand-navy border-t border-white/10 py-3 px-4 space-y-2">
           <button
             onClick={() => { onNavigate('landing'); setMobileMenuOpen(false); }}
             className="min-h-11 w-full text-left py-2 px-3 rounded-lg text-sm text-slate-200 hover:bg-white/5"
@@ -125,7 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
           </button>
           <button
             onClick={() => { onNavigate('booking'); setMobileMenuOpen(false); }}
-            className="min-h-11 w-full text-left py-2 px-3 rounded-lg text-sm bg-indigo-600 text-white font-medium flex items-center gap-1.5"
+            className="min-h-11 w-full text-left py-2 px-3 rounded-lg text-sm bg-brand-copper text-brand-navy font-medium flex items-center gap-1.5"
           >
             <Calendar size={14} /> Agendar Online
           </button>
@@ -157,9 +157,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage, onOpenL
               )}
             </>
           )}
-          <div className="border-t border-slate-800 pt-3 flex flex-col gap-2">
+          <div className="border-t border-white/10 pt-3 flex flex-col gap-2">
             {currentUser ? (
-              <div className="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-800">
+              <div className="flex items-center justify-between bg-brand-navy-soft p-3 rounded-lg border border-white/10">
                 <div className="flex items-center gap-2">
                   {currentUser.avatar ? (
                     <img src={currentUser.avatar} alt={currentUser.name} className="w-8 h-8 rounded-full object-cover" />
