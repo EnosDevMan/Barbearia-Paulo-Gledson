@@ -1,0 +1,74 @@
+/* Fontes (Inter, JetBrains Mono) carregadas via <link> no index.html, não
+   por @import aqui — @import força uma cadeia serial de requisições
+   (HTML -> este CSS -> CSS do Google Fonts -> arquivo da fonte) antes da
+   fonte ficar disponível; <link rel="preconnect"> + <link rel="stylesheet">
+   deixa o navegador começar a buscar em paralelo, bem mais cedo. */
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Redefine indigo to be modern premium Navy Blue shades */
+  --color-indigo-50: #f0f5fa;
+  --color-indigo-100: #e1ebf5;
+  --color-indigo-200: #c4d7eb;
+  --color-indigo-300: #97b8de;
+  --color-indigo-400: #598fc2;
+  --color-indigo-500: #1c5d99;
+  --color-indigo-600: #0f2e54; /* Gorgeous Navy Blue */
+  --color-indigo-700: #0b2240; /* Deep Navy Blue */
+  --color-indigo-800: #081a30;
+  --color-indigo-900: #05101f;
+  --color-indigo-950: #02070d;
+
+  /* Redefine purple to support complementary slate-navy tones */
+  --color-purple-50: #f3f6fa;
+  --color-purple-100: #e4eaf2;
+  --color-purple-200: #c9d5e6;
+  --color-purple-600: #1d3557;
+  --color-purple-700: #15263f;
+  --color-purple-800: #0d1929;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes scissor-shake {
+  0%, 100% { transform: rotate(12deg) scale(1); }
+  50% { transform: rotate(-12deg) scale(1.2); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.1); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 6s linear infinite;
+}
+
+.animate-scissor-shake {
+  animation: scissor-shake 1.2s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
