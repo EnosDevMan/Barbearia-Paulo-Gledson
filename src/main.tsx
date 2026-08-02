@@ -1,6 +1,7 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
+import { getSupabaseConfigError } from './utils/environment.ts';
 import './index.css';
 
 const root = createRoot(document.getElementById('root')!);
@@ -16,7 +17,8 @@ const renderStartupError = (message: string) => {
           <h1 className="text-xl font-black">Aplicação não configurada</h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-300">{message}</p>
           <p className="mt-5 text-xs leading-relaxed text-slate-500">
-            Configure o ambiente da implantação e publique o branch novamente.
+            Na Vercel, habilite as variáveis também para o ambiente Preview e publique o branch
+            novamente.
           </p>
         </div>
       </div>
@@ -24,17 +26,16 @@ const renderStartupError = (message: string) => {
   );
 };
 
-const hasSupabaseConfig = Boolean(
-  import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY,
-);
+const supabaseConfigError = getSupabaseConfigError({
+  VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+  VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+});
 
-if (!hasSupabaseConfig) {
+if (supabaseConfigError) {
   // App importa o cliente Supabase. Carregá-lo sem as variáveis lançaria um
   // erro antes mesmo de o ErrorBoundary ser montado, resultando em uma tela
   // totalmente vazia nos previews de branches sem ambiente configurado.
-  renderStartupError(
-    'As variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não estão disponíveis.',
-  );
+  renderStartupError(supabaseConfigError);
 } else {
   import('./App.tsx')
     .then(({ default: App }) => {

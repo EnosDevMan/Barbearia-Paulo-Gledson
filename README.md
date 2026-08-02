@@ -34,7 +34,7 @@ O `seed.sql` é exclusivamente local. Antes de produção, valide as migrations 
 
 No Supabase, configure Site URL e Redirect URLs com o domínio final, confirme o provedor de e-mail e traduza os templates. Configure SMTP de produção, políticas de senha e backups. Os buckets públicos `avatars` e `gallery` são criados pelas migrations, limitados a JPG/PNG/WEBP e 5 MB; escrita é protegida por RLS.
 
-Na Vercel, use Node 22, `npm ci`, `npm run build`, diretório `dist` e apenas as duas variáveis `VITE_*`. Os headers de segurança estão em `vercel.json`.
+Na Vercel, use Node 22, `npm ci`, `npm run build`, diretório `dist` e apenas as duas variáveis `VITE_*`. Marque ambas as variáveis para os ambientes **Production** e **Preview**; variáveis habilitadas somente em Production não são injetadas nos deploys de branches e pull requests. Depois de alterar o escopo, faça um redeploy do branch. Os headers de segurança estão em `vercel.json`.
 
 ## Notas operacionais
 
