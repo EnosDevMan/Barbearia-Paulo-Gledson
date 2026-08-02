@@ -216,6 +216,24 @@ create function auth_role() returns user_role as $$
   select role from profiles where id = auth.uid();
 $$ language sql stable security definer set search_path = public, pg_temp;
 
+-- Garante também no caminho de provisionamento consolidado que um INSERT
+-- direto ou feito por uma função SECURITY DEFINER não associe um agendamento
+-- ao perfil de outra pessoa. Convidados sempre usam customer_id nulo; apenas
+-- administradores podem criar agendamentos em nome de terceiros.
+create function enforce_booking_customer_identity()
+returns trigger as $$
+begin
+  if auth.uid() is null and new.customer_id is not null then
+    raise exception 'Agendamentos de convidados devem usar customer_id nulo.';
+  end if;
+  if auth.uid() is not null and auth_role() <> 'admin'
+     and new.customer_id is distinct from auth.uid() then
+    raise exception 'Não é possível criar um agendamento em nome de outro usuário.';
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public, pg_temp;
+
 -- Cria automaticamente um profile 'customer' quando um usuário se cadastra.
 -- Promover para 'admin'/'barber' é feito manualmente (painel admin ou SQL),
 -- nunca pelo próprio cadastro público.
@@ -802,6 +820,10 @@ create trigger on_auth_user_email_updated
 create trigger profiles_prevent_privilege_escalation
   before update on profiles
   for each row execute procedure prevent_profile_privilege_escalation();
+
+create trigger bookings_enforce_customer_identity
+  before insert on bookings
+  for each row execute procedure enforce_booking_customer_identity();
 
 create trigger bookings_protect_updates
   before update on bookings
