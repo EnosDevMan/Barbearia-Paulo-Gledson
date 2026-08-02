@@ -18,6 +18,59 @@ const WEEK_DAYS = [
   { id: 6, label: 'Sáb' },
 ];
 
+/**
+ * Precisa viver FORA de `AdminSettingsTab` (não dentro do corpo dela).
+ * Antes, era definida dentro do componente e, por isso, o React recriava
+ * uma FUNÇÃO/COMPONENTE NOVA a cada re-render — e como o formulário
+ * re-renderiza a cada tecla digitada (estado controlado), o React tratava
+ * cada `<FormSection>` como um componente diferente do anterior a cada
+ * letra, desmontando e remontando o card inteiro. Isso derrubava o foco
+ * do campo que estava sendo editado e, no celular, fechava o teclado a
+ * cada tecla. Definindo aqui fora, a identidade do componente fica
+ * estável entre renders e o React só atualiza o conteúdo, sem desmontar.
+ */
+const FormSection: React.FC<{
+  id: string;
+  title: string;
+  expandedSection: string | null;
+  setExpandedSection: (id: string | null) => void;
+  children: React.ReactNode;
+}> = ({ id, title, expandedSection, setExpandedSection, children }) => {
+  const isExpanded = expandedSection === id;
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <button
+        onClick={() => setExpandedSection(isExpanded ? null : id)}
+        className="hidden md:block w-full text-left"
+      >
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+          <h3 className="font-extrabold text-slate-900 text-lg">{title}</h3>
+        </div>
+      </button>
+
+      <div className="md:hidden">
+        <button
+          onClick={() => setExpandedSection(isExpanded ? null : id)}
+          className="w-full text-left p-4 border-b border-slate-100 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between"
+        >
+          <h3 className="font-bold text-slate-900">{title}</h3>
+          <ChevronDown
+            size={18}
+            className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          />
+        </button>
+      </div>
+
+      <div className={`overflow-hidden transition-all duration-300 md:block ${isExpanded ? 'max-h-none' : 'max-h-0 md:max-h-none'}`}>
+        <div className="p-6 space-y-6">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback }) => {
   const { config, updateConfig } = useApp();
 
@@ -81,45 +134,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
     }
   };
 
-  const FormSection: React.FC<{ 
-    id: string; 
-    title: string; 
-    children: React.ReactNode 
-  }> = ({ id, title, children }) => {
-    const isExpanded = expandedSection === id;
 
-    return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <button
-          onClick={() => setExpandedSection(isExpanded ? null : id)}
-          className="hidden md:block w-full text-left"
-        >
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
-            <h3 className="font-extrabold text-slate-900 text-lg">{title}</h3>
-          </div>
-        </button>
-
-        <div className="md:hidden">
-          <button
-            onClick={() => setExpandedSection(isExpanded ? null : id)}
-            className="w-full text-left p-4 border-b border-slate-100 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between"
-          >
-            <h3 className="font-bold text-slate-900">{title}</h3>
-            <ChevronDown 
-              size={18} 
-              className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-            />
-          </button>
-        </div>
-
-        <div className={`overflow-hidden transition-all duration-300 md:block ${isExpanded ? 'max-h-none' : 'max-h-0 md:max-h-none'}`}>
-          <div className="p-6 space-y-6">
-            {children}
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -143,7 +158,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
       {/* Formulário - Grid responsivo */}
       <div className="space-y-6">
         {/* Seção 1: Informações Básicas */}
-        <FormSection id="basic" title="📋 Informações Básicas">
+        <FormSection id="basic" title="📋 Informações Básicas" expandedSection={expandedSection} setExpandedSection={setExpandedSection}>
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Nome do Estabelecimento</label>
@@ -204,7 +219,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
         </FormSection>
 
         {/* Seção 2: Horários e Agendamento */}
-        <FormSection id="schedule" title="⏰ Horários e Agendamento">
+        <FormSection id="schedule" title="⏰ Horários e Agendamento" expandedSection={expandedSection} setExpandedSection={setExpandedSection}>
           <div className="space-y-6">
             <div className="space-y-3">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Dias de Funcionamento</label>
@@ -271,7 +286,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
         </FormSection>
 
         {/* Seção 3: Pagamento e Taxas */}
-        <FormSection id="payment" title="💳 Pagamento e Taxas">
+        <FormSection id="payment" title="💳 Pagamento e Taxas" expandedSection={expandedSection} setExpandedSection={setExpandedSection}>
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Taxa de Reserva (R$)</label>
@@ -302,7 +317,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
         </FormSection>
 
         {/* Seção 4: Customização do Site */}
-        <FormSection id="customization" title="🎨 Customização do Site">
+        <FormSection id="customization" title="🎨 Customização do Site" expandedSection={expandedSection} setExpandedSection={setExpandedSection}>
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Título Principal</label>

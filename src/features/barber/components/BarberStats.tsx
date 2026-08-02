@@ -8,7 +8,7 @@ interface BarberStatsProps {
   formatBRL: (val: number) => string;
   statsPeriod: 'day' | 'week' | 'month';
   setStatsPeriod: (period: 'day' | 'week' | 'month') => void;
-  serviceStatsList: { name: string; count: number; totalValue: number }[];
+  serviceStatsList: { id: string; name: string; count: number; totalValue: number }[];
   totalPeriodValue: number;
 }
 
@@ -87,8 +87,8 @@ export const BarberStats: React.FC<BarberStatsProps> = ({
         {serviceStatsList.length > 0 ? (
           <div className="space-y-3">
             <div className="divide-y divide-slate-100">
-              {serviceStatsList.map((stat, idx) => (
-                <div key={idx} className="py-2 flex justify-between items-center text-xs">
+              {serviceStatsList.map((stat) => (
+                <div key={stat.id} className="py-2 flex justify-between items-center text-xs">
                   <div>
                     <p className="font-bold text-slate-800">{stat.name}</p>
                     <p className="text-slate-400 text-[10px] mt-0.5">{stat.count}x realizado{stat.count > 1 ? 's' : ''}</p>

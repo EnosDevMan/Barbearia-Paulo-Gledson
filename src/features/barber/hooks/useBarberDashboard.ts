@@ -159,7 +159,9 @@ export const useBarberDashboard = () => {
     });
   });
 
-  const serviceStatsList = Object.values(serviceStats).sort((a, b) => b.totalValue - a.totalValue);
+  const serviceStatsList = Object.entries(serviceStats)
+    .map(([id, s]) => ({ id, ...s }))
+    .sort((a, b) => b.totalValue - a.totalValue);
 
   const handleStatusChange = async (bookingId: string, status: BookingStatus) => {
     try {

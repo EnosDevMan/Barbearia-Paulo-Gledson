@@ -6,6 +6,10 @@ import { getBarberName as getSharedBarberName, getServiceName as getSharedServic
 export type ReportPeriod = 'day' | 'week' | 'month' | 'year' | 'custom';
 
 export interface ReportChartBucket {
+  /** Data de início do bucket (YYYY-MM-DD) — único dentro de qualquer
+   * período exibido, então serve como key estável no gráfico (o `label`
+   * sozinho pode se repetir, ex: mesmo dia da semana em semanas diferentes). */
+  start: string;
   label: string;
   value: number;
 }
@@ -247,7 +251,7 @@ export const useAdminReports = () => {
       const value = completedInRange
         .filter(b => b.date >= bucket.start && b.date <= bucket.end)
         .reduce((sum, b) => sum + b.value, 0);
-      return { label: bucket.label, value };
+      return { start: bucket.start, label: bucket.label, value };
     });
   }, [buckets, completedInRange]);
 

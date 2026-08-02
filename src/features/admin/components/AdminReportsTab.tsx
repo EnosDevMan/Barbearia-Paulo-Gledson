@@ -165,8 +165,8 @@ export const AdminReportsTab: React.FC<AdminReportsTabProps> = ({ formatBRL }) =
           <h3 className="font-extrabold text-slate-900 tracking-tight text-lg mb-1">Evolução do Faturamento</h3>
           <p className="text-xs text-slate-500 mb-6">Serviços concluídos, por {CHART_UNIT_LABEL[period]}.</p>
           <div className="flex items-end gap-2 sm:gap-4 h-48 overflow-x-auto custom-scrollbar">
-            {chartData.map((bucket, idx) => (
-              <div key={idx} className="flex-1 min-w-8 flex flex-col items-center justify-end h-full gap-2">
+            {chartData.map((bucket) => (
+              <div key={bucket.start} className="flex-1 min-w-8 flex flex-col items-center justify-end h-full gap-2">
                 <span className="text-[9px] sm:text-[10px] font-bold text-slate-600 font-mono whitespace-nowrap">
                   {bucket.value > 0 ? formatBRL(bucket.value) : ''}
                 </span>
