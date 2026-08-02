@@ -1,81 +1,36 @@
-import React from 'react';
-import { Scissors, TrendingUp } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, Clock } from 'lucide-react';
 import { Service } from '../../../types';
 import { formatBRL } from '../../../utils/validation';
 
-interface ServicesSectionProps {
-  categories: string[];
-  activeServices: Service[];
-  onStartBooking: () => void;
-}
-
-export const ServicesSection: React.FC<ServicesSectionProps> = ({ categories, activeServices, onStartBooking }) => {
-  return (
-    <section id="services-section" className="py-24 px-4 bg-white">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-16 max-w-xl mx-auto">
-          <div className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
-            <TrendingUp size={12} className="text-indigo-600" /> NOSSA ESPECIALIDADE
-          </div>
-          <h2 className="text-3xl md:text-5xl font-black text-slate-900 font-sans tracking-tight">
-            Menu de Serviços
-          </h2>
-          <p className="text-slate-500 text-sm sm:text-base mt-4 leading-relaxed">
-            Selecione a categoria desejada. Todos os procedimentos incluem lavagem, finalização e consultoria de estilo.
-          </p>
-        </div>
-
-        <div className="space-y-16">
-          {categories.map((category) => (
-            <div key={category} className="scroll-mt-24">
-              <div className="flex items-center gap-4 mb-8">
-                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{category}</h3>
-                <div className="h-px bg-slate-200 flex-1"></div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {activeServices
-                  .filter(s => s.category === category)
-                  .map(service => (
-                    <div 
-                      key={service.id} 
-                      className="group flex flex-col sm:flex-row justify-between p-6 bg-slate-50 hover:bg-white rounded-3xl border border-slate-100 hover:border-indigo-100 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-900/5 cursor-pointer relative overflow-hidden"
-                      onClick={onStartBooking}
-                    >
-                      {/* Decorative background element on hover */}
-                      <div className="absolute -right-10 -top-10 w-40 h-40 bg-indigo-50 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      
-                      <div className="flex-1 pr-4 relative z-10">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="text-lg font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">
-                            {service.name}
-                          </h4>
-                        </div>
-                        {service.description && (
-                          <p className="text-slate-500 text-sm mb-3 line-clamp-2 pr-4">{service.description}</p>
-                        )}
-                        <div className="flex items-center gap-3">
-                          <span className="inline-block bg-white border border-slate-200 text-slate-600 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">
-                            {service.duration} min
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-4 sm:mt-0 flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center shrink-0 border-t sm:border-t-0 sm:border-l border-slate-200 pt-4 sm:pt-0 sm:pl-6 relative z-10">
-                        <p className="text-2xl font-black text-slate-900 font-mono tracking-tighter">
-                          {formatBRL(service.price)}
-                        </p>
-                        <button className="bg-slate-900 group-hover:bg-indigo-600 text-white p-2.5 rounded-xl transition-colors mt-0 sm:mt-3 shadow-sm">
-                          <Scissors size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          ))}
+interface Props { categories: string[]; activeServices: Service[]; onSelectService: (id: string) => void; }
+export const ServicesSection: React.FC<Props> = ({ categories, activeServices, onSelectService }) => {
+  const [category, setCategory] = useState('Todos');
+  const rail = useRef<HTMLDivElement>(null);
+  const filtered = useMemo(() => category === 'Todos' ? activeServices : activeServices.filter(s => s.category === category), [activeServices, category]);
+  const move = (direction: number) => rail.current?.scrollBy({ left: direction * rail.current.clientWidth * .85, behavior: 'smooth' });
+  return <section id="services-section" className="bg-white px-4 py-14 sm:py-16 lg:py-20">
+    <div className="mx-auto max-w-6xl">
+      <div className="flex items-end justify-between gap-4">
+        <div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#9a6738]">Serviços</p><h2 className="mt-2 text-3xl font-black tracking-tight text-[#07182b] sm:text-4xl">Escolha seu cuidado</h2></div>
+        <div className="hidden gap-2 lg:flex">
+          <button aria-label="Serviços anteriores" onClick={() => move(-1)} className="grid size-11 place-items-center border border-slate-300 text-slate-700 hover:bg-slate-50"><ArrowLeft size={19}/></button>
+          <button aria-label="Próximos serviços" onClick={() => move(1)} className="grid size-11 place-items-center border border-slate-300 text-slate-700 hover:bg-slate-50"><ArrowRight size={19}/></button>
         </div>
       </div>
-    </section>
-  );
+      <div role="tablist" aria-label="Categorias de serviços" className="no-scrollbar -mx-4 mt-7 flex overflow-x-auto px-4 pb-2 whitespace-nowrap">
+        {['Todos', ...categories].map(item => <button key={item} role="tab" aria-selected={category === item} onClick={() => setCategory(item)} className={`min-h-11 shrink-0 border-b-2 px-4 text-sm font-bold ${category === item ? 'border-[#c9975b] text-[#07182b]' : 'border-slate-200 text-slate-500'}`}>{item}</button>)}
+      </div>
+      <div ref={rail} className="services-rail -mx-4 mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3" aria-live="polite">
+        {filtered.map(service => <article key={service.id} className="service-card flex shrink-0 snap-start flex-col border border-slate-200 bg-[#fbfaf7] p-5">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#9a6738]">{service.category}</span>
+          <h3 className="mt-2 break-words text-xl font-extrabold text-[#07182b]">{service.name}</h3>
+          <p className="mt-3 line-clamp-3 min-h-[4.5rem] text-sm leading-6 text-slate-600">{service.description || 'Serviço realizado com atenção aos detalhes.'}</p>
+          <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-200 pt-4"><span className="flex items-center gap-1.5 text-sm text-slate-600"><Clock size={16}/>{service.duration} min</span><strong className="break-words text-lg text-[#07182b]">{formatBRL(service.price)}</strong></div>
+          <button onClick={() => onSelectService(service.id)} className="mt-5 min-h-12 w-full bg-[#07182b] px-4 py-3 text-sm font-bold text-white hover:bg-[#102e4e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#07182b]">Escolher serviço</button>
+        </article>)}
+      </div>
+      <a href="#services-section" onClick={() => setCategory('Todos')} className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-[#07182b] underline decoration-[#c9975b] decoration-2 underline-offset-4">Ver todos os serviços</a>
+    </div>
+  </section>;
 };

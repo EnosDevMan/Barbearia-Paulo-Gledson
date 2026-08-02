@@ -16,12 +16,13 @@ const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(mod
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage').then(module => ({ default: module.PrivacyPolicyPage })));
 import { LoginModal } from './components/LoginModal';
 import { ResetPasswordView } from './components/ResetPasswordView';
-import { Shield } from 'lucide-react';
+import { Shield, Scissors } from 'lucide-react';
 import { LoadingScreen } from './components/LoadingScreen';
 
 function BarbeariaApp() {
   const [currentView, setCurrentView] = useState<'landing' | 'booking' | 'customer' | 'barber' | 'admin' | 'privacy'>('landing');
   const [loginOpen, setLoginOpen] = useState(false);
+  const [bookingSelection, setBookingSelection] = useState<{ serviceId?: string; barberId?: string }>({});
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState('');
   const { loading, loadError, currentUser, passwordRecoveryMode, completePasswordRecovery, logout } = useApp();
@@ -43,7 +44,7 @@ function BarbeariaApp() {
   // fica oculta para não duplicar essa navegação (e não sobrepor no mobile).
   const isAdminShell = currentView === 'admin' && currentUser?.role === 'admin';
 
-  const navigateTo = (view: typeof currentView) => {
+  const navigateTo = (view: typeof currentView, selection?: { serviceId?: string; barberId?: string }) => {
     // Validação de RBAC
     if (view === 'admin' && currentUser?.role !== 'admin') {
       return;
@@ -62,6 +63,7 @@ function BarbeariaApp() {
     }
 
     if (view === 'booking') {
+      setBookingSelection(selection || {});
       setIsTransitioning(true);
       setTransitionMessage('Preparando a agenda...');
       setTimeout(() => {
@@ -90,7 +92,7 @@ function BarbeariaApp() {
       case 'landing':
         return (
           <LandingPage
-            onStartBooking={() => navigateTo('booking')}
+            onStartBooking={(selection) => navigateTo('booking', selection)}
             onOpenLogin={() => setLoginOpen(true)}
             onOpenPrivacy={() => navigateTo('privacy')}
           />
@@ -98,7 +100,9 @@ function BarbeariaApp() {
       case 'booking':
         return (
           <BookingFlow
-            onNavigateToView={(view) => navigateTo(view)}
+            initialServiceId={bookingSelection.serviceId}
+            initialBarberId={bookingSelection.barberId}
+            onNavigateToView={(view) => navigateTo(view === 'home' ? 'landing' : view)}
           />
         );
       case 'customer':
@@ -164,7 +168,7 @@ function BarbeariaApp() {
       default:
         return (
           <LandingPage
-            onStartBooking={() => navigateTo('booking')}
+            onStartBooking={(selection) => navigateTo('booking', selection)}
             onOpenLogin={() => setLoginOpen(true)}
             onOpenPrivacy={() => navigateTo('privacy')}
           />
@@ -197,15 +201,9 @@ function BarbeariaApp() {
       {/* Transitional Scissors Loader */}
       {isTransitioning && (
         <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center text-white animate-in fade-in duration-200">
-          <div className="flex flex-col items-center text-center max-w-sm px-6 animate-float">
-            <div className="relative w-20 h-20 flex items-center justify-center">
-              <div className="absolute -inset-2 border border-slate-800/40 border-dashed rounded-full animate-spin-slow" />
-              <div className="absolute inset-0 border-[3px] border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
-              <span className="text-3xl animate-scissor-shake select-none filter drop-shadow-[0_4px_8px_rgba(245,158,11,0.4)]">✂️</span>
-            </div>
-            <p className="text-xs font-bold tracking-widest text-amber-500 uppercase mt-6 animate-pulse">
-              {transitionMessage}
-            </p>
+          <div className="flex flex-col items-center text-center max-w-sm px-6" role="status">
+            <Scissors size={36} className="text-amber-500" aria-hidden="true" />
+            <p className="text-sm font-bold text-white mt-5">{transitionMessage}</p>
           </div>
         </div>
       )}

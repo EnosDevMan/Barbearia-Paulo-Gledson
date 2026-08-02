@@ -12,7 +12,7 @@ interface LoginModalProps {
 type Mode = 'login' | 'register' | 'forgot';
 
 const inputClass =
-  'w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow';
+  'w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow';
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onOpenPrivacy }) => {
   const { login, register, loading, error: authError } = useAuth();
@@ -26,6 +26,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onOpenP
   const [resetSent, setResetSent] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(false);
   const [privacyConsent, setPrivacyConsent] = useState(false);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', onKey); };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -105,23 +114,21 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onOpenP
       setLocalError('É necessário concordar com a Política de Privacidade para criar uma conta.');
       return;
     }
-    const ok = await register({ name, email, phone, password });
-    if (ok) {
+    const result = await register({ name, email, phone, password });
+    if (result === 'authenticated') {
       handleClose();
       return;
     }
-    if (!authError) {
-      setPendingConfirmation(true);
-    }
+    if (result === 'confirmation') setPendingConfirmation(true);
   };
 
   const displayError = localError || authError;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
+    <div role="dialog" aria-modal="true" aria-labelledby="auth-dialog-title" className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
       <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-xl w-full sm:max-w-md overflow-hidden animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-250 border border-slate-100 flex flex-col max-h-[92vh]">
         <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">
+          <h2 id="auth-dialog-title" className="text-xl font-black text-slate-900 tracking-tight">
             {mode === 'login' && 'Entrar'}
             {mode === 'register' && 'Criar conta'}
             {mode === 'forgot' && 'Recuperar senha'}
@@ -135,7 +142,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onOpenP
           </button>
         </div>
 
-        <div className="overflow-y-auto p-6">
+        <div className="overflow-y-auto overscroll-contain p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           {mode !== 'forgot' && (
             <div className="flex bg-slate-100 rounded-xl p-1 mb-6">
               <button

@@ -10,9 +10,11 @@ import { SuccessStep } from '../features/booking/components/SuccessStep';
 interface BookingFlowProps {
   onSuccess?: (bookingId: string) => void;
   onNavigateToView: (view: 'home' | 'admin' | 'customer', id?: string) => void;
+  initialServiceId?: string;
+  initialBarberId?: string;
 }
 
-export const BookingFlow: React.FC<BookingFlowProps> = ({ onSuccess, onNavigateToView }) => {
+export const BookingFlow: React.FC<BookingFlowProps> = ({ onSuccess, onNavigateToView, initialServiceId, initialBarberId }) => {
   const {
     step,
     services,
@@ -37,7 +39,6 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({ onSuccess, onNavigateT
     
     custName, setCustName,
     custPhone, setCustPhone,
-    custEmail, setCustEmail,
     notes, setNotes,
     
     errorMsg,
@@ -51,10 +52,10 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({ onSuccess, onNavigateT
     handleNext,
     handleBack,
     handleConfirm
-  } = useBookingFlow(onSuccess);
+  } = useBookingFlow(onSuccess, initialServiceId, initialBarberId);
 
   return (
-    <div className="max-w-2xl mx-auto w-full pb-20">
+    <div className="mx-auto w-full max-w-2xl px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-8 sm:px-6">
       {/* Header with Title and Progress */}
       {step < 5 && (
         <div className="mb-8">
@@ -92,13 +93,13 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({ onSuccess, onNavigateT
 
       {/* Error Message */}
       {errorMsg && (
-        <div className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-sm font-medium animate-in fade-in slide-in-from-top-2">
+        <div role="alert" aria-live="assertive" className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-sm font-medium animate-in fade-in slide-in-from-top-2">
           {errorMsg}
         </div>
       )}
 
       {/* Steps Content */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100">
+      <div className="border border-slate-200 bg-white p-4 shadow-sm sm:p-8">
         {step === 1 && (
           <ServiceSelectionStep 
             services={services}
@@ -131,7 +132,6 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({ onSuccess, onNavigateT
             currentUser={currentUser}
             custName={custName} setCustName={setCustName}
             custPhone={custPhone} setCustPhone={setCustPhone}
-            custEmail={custEmail} setCustEmail={setCustEmail}
             notes={notes} setNotes={setNotes}
             selectedBarber={selectedBarber}
             selectedServices={selectedServices}
@@ -160,7 +160,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({ onSuccess, onNavigateT
             <button
               onClick={step === 1 ? () => onNavigateToView('home') : handleBack}
               disabled={isProcessing}
-              className="px-5 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors disabled:opacity-50"
+              aria-label="Voltar" className="min-h-12 min-w-12 px-3 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors disabled:opacity-50"
             >
               <ArrowLeft size={20} />
             </button>
