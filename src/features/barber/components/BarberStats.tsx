@@ -1,6 +1,5 @@
 import React from 'react';
 import { DollarSign, Scissors, TrendingUp } from 'lucide-react';
-import { Booking } from '../../../types';
 
 interface BarberStatsProps {
   totalEarnings: number;

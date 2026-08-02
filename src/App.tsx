@@ -4,7 +4,8 @@
  */
 
 import { useState } from 'react';
-import { AppDataLoader, useApp } from './store/useApp';
+import { useApp } from './store/useApp';
+import { AppDataLoader } from './store/AppDataLoader';
 import { Navbar } from './components/Navbar';
 import { Suspense, lazy } from 'react';
 
