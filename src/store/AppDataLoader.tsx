@@ -30,7 +30,7 @@ export const AppDataLoader: React.FC<{ children: React.ReactNode }> = ({ childre
     beginLoad();
     const loadData = async () => {
       try {
-        const data = await dataService.loadAllData();
+        const data = await dataService.loadAllData(currentUserRole);
         if (mounted) {
           setConfig(data.config);
           setInitialData({

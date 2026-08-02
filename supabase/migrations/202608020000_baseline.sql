@@ -145,7 +145,6 @@ create table services (
   category text not null default '',
   active boolean not null default true,
   "order" int not null default 0,
-  display_order int not null default 0,
   created_at timestamptz not null default now()
 );
 
@@ -194,7 +193,6 @@ create table gallery_photos (
   image_url text not null,
   caption text,
   "order" int not null default 0,
-  display_order int not null default 0,
   created_at timestamptz not null default now()
 );
 
@@ -204,8 +202,6 @@ create table gallery_photos (
 -- ============================================================================
 create index bookings_barber_date_idx on bookings (barber_id, date);
 create index bookings_customer_idx on bookings (customer_id);
-create index bookings_date_id_idx on bookings (date desc, id);
-create index gallery_photos_display_order_idx on gallery_photos (display_order, created_at, id);
 
 
 -- ============================================================================
@@ -992,14 +988,12 @@ create policy "gallery_photos_write_admin" on gallery_photos for all
 -- ============================================================================
 -- Permite chamada tanto por usuários autenticados quanto anônimos
 -- (agendamento de convidado, sem conta).
-revoke all on function create_booking(uuid, text, text, uuid, text, date, time, text, numeric) from public;
 grant execute on function create_booking(
   uuid, text, text, uuid, text, date, time, text, numeric
 ) to anon, authenticated;
 
 -- Reagendamento exige estar autenticado (cliente, barbeiro ou admin) —
 -- convidado não tem uma agenda própria para reagendar por conta própria.
-revoke all on function reschedule_booking(uuid, date, time) from public, anon;
 grant execute on function reschedule_booking(uuid, date, time) to authenticated;
 
 commit;

@@ -13,8 +13,7 @@ import { Barber, Service, BarbershopConfig, Booking, User, ScheduleBlock, Galler
  * abaixo convertem para os tipos `camelCase` de `src/types.ts`.
  */
 
-export const DEFAULT_AVATAR =
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=barber';
+export const DEFAULT_AVATAR = '/favicon.svg';
 
 // Tipos do Supabase (como vêm do wire/JSON)
 type ProfileRow = {
@@ -86,6 +85,7 @@ type GalleryPhotoRow = {
   image_url: string;
   caption?: string;
   order?: number;
+  display_order?: number;
   created_at?: string;
 };
 
@@ -193,7 +193,7 @@ function mapGalleryPhoto(row: GalleryPhotoRow): GalleryPhoto {
     id: row.id,
     imageUrl: row.image_url,
     caption: row.caption ?? undefined,
-    order: row.order ?? undefined,
+    order: row.display_order ?? row.order ?? undefined,
     createdAt: row.created_at,
   };
 }
@@ -225,7 +225,7 @@ export const dataService = {
   /**
    * Carrega todos os dados iniciais em paralelo.
    */
-  async loadAllData(): Promise<{
+  async loadAllData(role?: User['role']): Promise<{
     config: BarbershopConfig;
     barbers: Barber[];
     services: Service[];
@@ -234,30 +234,48 @@ export const dataService = {
     scheduleBlocks: ScheduleBlock[];
     galleryPhotos: GalleryPhoto[];
   }> {
-    const [configRes, barbersRes, servicesRes, bookingsRes, usersRes, blocksRes, galleryRes] = await Promise.all([
+    const [configRes, barbersRes, servicesRes, blocksRes, galleryRes] = await Promise.all([
       supabase.from('barbershop_config').select('*').eq('id', true).single(),
       supabase.from('barbers').select('*').order('order', { ascending: true }),
       supabase.from('services').select('*').order('order', { ascending: true }),
-      supabase.from('bookings').select('*').order('date', { ascending: true }),
-      supabase.from('profiles').select('*'),
       supabase.from('schedule_blocks').select('*'),
-      supabase.from('gallery_photos').select('*').order('created_at', { ascending: false }),
+      supabase.from('gallery_photos').select('*').order('display_order', { ascending: true }).order('created_at', { ascending: true }),
     ]);
 
     throwIfError(configRes.error);
     throwIfError(barbersRes.error);
     throwIfError(servicesRes.error);
-    throwIfError(bookingsRes.error);
-    throwIfError(usersRes.error);
     throwIfError(blocksRes.error);
     throwIfError(galleryRes.error);
+
+    // Visitantes não consultam tabelas protegidas. Para usuários autenticados,
+    // paginação explícita evita o limite silencioso de 1.000 linhas do PostgREST.
+    const bookings: BookingRow[] = [];
+    if (role) {
+      for (let from = 0; ; from += 500) {
+        const result = await supabase.from('bookings').select('*').order('date').range(from, from + 499);
+        throwIfError(result.error);
+        bookings.push(...((result.data || []) as BookingRow[]));
+        if ((result.data?.length ?? 0) < 500) break;
+      }
+    }
+
+    const users: ProfileRow[] = [];
+    if (role === 'admin') {
+      for (let from = 0; ; from += 500) {
+        const result = await supabase.from('profiles').select('*').order('created_at', { ascending: false }).range(from, from + 499);
+        throwIfError(result.error);
+        users.push(...((result.data || []) as ProfileRow[]));
+        if ((result.data?.length ?? 0) < 500) break;
+      }
+    }
 
     return {
       config: mapConfig(configRes.data),
       barbers: (barbersRes.data || []).map(mapBarber),
       services: (servicesRes.data || []).map(mapService),
-      bookings: (bookingsRes.data || []).map(mapBooking),
-      users: (usersRes.data || []).map(mapProfile),
+      bookings: bookings.map(mapBooking),
+      users: users.map(mapProfile),
       scheduleBlocks: (blocksRes.data || []).map(mapScheduleBlock),
       galleryPhotos: (galleryRes.data || []).map(mapGalleryPhoto),
     };
@@ -544,7 +562,7 @@ export const dataService = {
       .insert({
         image_url: photo.imageUrl,
         caption: photo.caption,
-        order: photo.order ?? 0,
+        display_order: photo.order ?? 0,
       })
       .select()
       .single();
@@ -557,7 +575,7 @@ export const dataService = {
       id: photo.id,
       image_url: photo.imageUrl,
       caption: photo.caption,
-      order: photo.order ?? 0,
+      display_order: photo.order ?? 0,
     });
     throwIfError(error);
   },

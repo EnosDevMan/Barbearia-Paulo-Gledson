@@ -1,8 +1,5 @@
-/* Fontes (Inter, JetBrains Mono) carregadas via <link> no index.html, não
-   por @import aqui — @import força uma cadeia serial de requisições
-   (HTML -> este CSS -> CSS do Google Fonts -> arquivo da fonte) antes da
-   fonte ficar disponível; <link rel="preconnect"> + <link rel="stylesheet">
-   deixa o navegador começar a buscar em paralelo, bem mais cedo. */
+/* Fontes locais do sistema: nenhuma requisição externa é necessária. */
+
 @import "tailwindcss";
 
 @theme {
