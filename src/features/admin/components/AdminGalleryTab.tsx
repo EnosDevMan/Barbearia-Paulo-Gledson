@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Trash2, Loader2, Camera } from 'lucide-react';
+import { Trash2, Loader2, Camera, ArrowLeft, ArrowRight, GripVertical } from 'lucide-react';
 import { useApp } from '../../../store/useApp';
 import { GalleryPhoto } from '../../../types';
-import { uploadImage } from '../../../services/storageService';
+import { removePublicImage, uploadImage } from '../../../services/storageService';
 import { getErrorMessage } from '../../../utils/errors';
 
 interface AdminGalleryTabProps {
@@ -25,11 +25,31 @@ export const AdminGalleryTab: React.FC<AdminGalleryTabProps> = ({
 
   const [isUploading, setIsUploading] = useState(false);
   const [captionDrafts, setCaptionDrafts] = useState<Record<string, string>>({});
+  const [draggedId, setDraggedId] = useState<string | null>(null);
 
-  // Mais recentes primeiro, como um feed de posts.
   const sortedPhotos = [...galleryPhotos].sort((a, b) =>
-    (b.createdAt || '').localeCompare(a.createdAt || '')
+    (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) ||
+    (a.createdAt || '').localeCompare(b.createdAt || '')
   );
+
+  const persistOrder = async (photos: GalleryPhoto[]) => {
+    await Promise.all(photos.map((photo, index) =>
+      updateGalleryPhoto({ ...photo, order: index })
+    ));
+  };
+
+  const movePhoto = async (from: number, to: number) => {
+    if (to < 0 || to >= sortedPhotos.length || from === to) return;
+    const reordered = [...sortedPhotos];
+    const [photo] = reordered.splice(from, 1);
+    reordered.splice(to, 0, photo);
+    try {
+      await persistOrder(reordered);
+      setSuccessMessage('Ordem da galeria atualizada.');
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err, 'Não foi possível salvar a ordem.'));
+    }
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -39,7 +59,7 @@ export const AdminGalleryTab: React.FC<AdminGalleryTabProps> = ({
       const ext = file.name.split('.').pop() || 'jpg';
       const path = `cortes/${crypto.randomUUID()}-${Date.now()}.${ext}`;
       const url = await uploadImage(file, path, 'gallery');
-      await addGalleryPhoto({ imageUrl: url, caption: '' });
+      await addGalleryPhoto({ imageUrl: url, caption: '', order: sortedPhotos.length });
       setSuccessMessage('Foto adicionada à galeria!');
     } catch (err) {
       setErrorMessage(getErrorMessage(err, 'Não foi possível enviar a foto.'));
@@ -62,6 +82,9 @@ export const AdminGalleryTab: React.FC<AdminGalleryTabProps> = ({
   const handleDelete = async (photo: GalleryPhoto) => {
     if (window.confirm('Tem certeza que deseja excluir esta foto da galeria?')) {
       try {
+        // Mantém o registro caso a exclusão física falhe, evitando uma foto
+        // órfã e invisível no bucket. A policy permite esta operação só ao admin.
+        await removePublicImage(photo.imageUrl, 'gallery');
         await deleteGalleryPhoto(photo.id);
         setSuccessMessage('Foto removida da galeria!');
       } catch (err) {
@@ -76,7 +99,7 @@ export const AdminGalleryTab: React.FC<AdminGalleryTabProps> = ({
         <div>
           <h2 className="text-xl font-extrabold text-slate-900">Galeria de Cortes</h2>
           <p className="text-sm font-medium text-slate-500 mt-1">
-            Fotos exibidas na home page, na seção "Nossos Trabalhos". As mais recentes aparecem primeiro.
+            Fotos exibidas na home page, na seção "Nossos Trabalhos". Arraste as fotos ou use os botões para definir a ordem de exibição.
           </p>
         </div>
       </div>
@@ -119,12 +142,23 @@ export const AdminGalleryTab: React.FC<AdminGalleryTabProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {sortedPhotos.map(photo => (
+          {sortedPhotos.map((photo, index) => (
             <div
+              draggable
+              onDragStart={() => setDraggedId(photo.id)}
+              onDragEnd={() => setDraggedId(null)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => {
+                const from = sortedPhotos.findIndex(item => item.id === draggedId);
+                if (from >= 0) void movePhoto(from, index);
+                setDraggedId(null);
+              }}
+              aria-label={`Foto ${index + 1} de ${sortedPhotos.length}`}
               key={photo.id}
               className="group relative bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:border-indigo-200 transition-colors"
             >
               <div className="aspect-square bg-slate-100">
+                <span aria-hidden="true" className="absolute left-2 top-2 rounded bg-slate-900/70 p-1 text-white"><GripVertical size={14} /></span>
                 <img
                   src={photo.imageUrl}
                   alt={photo.caption || 'Corte realizado na barbearia'}
@@ -134,12 +168,18 @@ export const AdminGalleryTab: React.FC<AdminGalleryTabProps> = ({
               <button
                 type="button"
                 onClick={() => handleDelete(photo)}
+                aria-label={`Excluir foto ${index + 1}`}
                 className="absolute top-2 right-2 p-2 rounded-full bg-slate-900/70 text-white opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-rose-600"
                 title="Excluir foto"
               >
                 <Trash2 size={14} />
               </button>
+              <div className="flex justify-center gap-2 border-t border-slate-100 p-2">
+                <button type="button" onClick={() => void movePhoto(index, index - 1)} disabled={index === 0} aria-label={`Mover foto ${index + 1} para a esquerda`} className="rounded p-2 hover:bg-slate-100 disabled:opacity-30"><ArrowLeft size={16} /></button>
+                <button type="button" onClick={() => void movePhoto(index, index + 1)} disabled={index === sortedPhotos.length - 1} aria-label={`Mover foto ${index + 1} para a direita`} className="rounded p-2 hover:bg-slate-100 disabled:opacity-30"><ArrowRight size={16} /></button>
+              </div>
               <input
+                aria-label={`Legenda da foto ${index + 1}`}
                 type="text"
                 defaultValue={photo.caption || ''}
                 onChange={(e) => setCaptionDrafts(prev => ({ ...prev, [photo.id]: e.target.value }))}

@@ -29,3 +29,21 @@ export async function uploadImage(file: File, path: string, bucket: string = 'av
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 }
+
+/** Remove somente objetos pertencentes ao bucket informado neste projeto. */
+export function getPublicStoragePath(publicUrl: string, bucket: string): string {
+  const marker = `/storage/v1/object/public/${bucket}/`;
+  const url = new URL(publicUrl);
+  const markerIndex = url.pathname.indexOf(marker);
+  if (markerIndex < 0) throw new Error('A foto não pertence ao Storage configurado.');
+
+  const path = decodeURIComponent(url.pathname.slice(markerIndex + marker.length));
+  if (!path || path.includes('..')) throw new Error('Caminho de foto inválido.');
+  return path;
+}
+
+export async function removePublicImage(publicUrl: string, bucket: string): Promise<void> {
+  const path = getPublicStoragePath(publicUrl, bucket);
+  const { error } = await supabase.storage.from(bucket).remove([path]);
+  if (error) throw new Error(error.message);
+}

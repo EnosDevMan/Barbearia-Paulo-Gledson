@@ -108,7 +108,7 @@ export const AdminBarberForm: React.FC<AdminBarberFormProps> = ({
     try {
       const bData: Omit<Barber, 'id'> = {
         name: barberName,
-        avatar: barberAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(barberName)}&background=random`,
+        avatar: barberAvatar || '/favicon.svg',
         specialty: barberSpecialty,
         active: barberActive,
         description: barberDescription,
