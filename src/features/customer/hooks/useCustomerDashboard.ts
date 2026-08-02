@@ -15,7 +15,6 @@ export const useCustomerDashboard = () => {
     confirmBookingAttendance,
     rescheduleBooking,
     getAvailableSlots,
-    config,
   } = useApp();
 
   const [reschedulingBookingId, setReschedulingBookingId] = useState<string | null>(null);

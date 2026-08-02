@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Clock, Scissors, User, Phone, XCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Calendar, Scissors, User, XCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { Booking } from '../../../types';
 import { getBarbershopNow } from '../../../utils/validation';
 

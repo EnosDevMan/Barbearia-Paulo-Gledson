@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, ArrowRight, User } from 'lucide-react';
+import { Plus, Edit2, Trash2, User } from 'lucide-react';
 import { useApp } from '../../../store/useApp';
 import { Barber } from '../../../types';
 import { AdminBarberForm } from './barbers/AdminBarberForm';

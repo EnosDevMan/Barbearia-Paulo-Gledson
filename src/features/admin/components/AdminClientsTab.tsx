@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { User, Phone, Mail, Calendar as CalendarIcon, DollarSign, Search } from 'lucide-react';
+import { User, Phone, Mail, Calendar as CalendarIcon, Search } from 'lucide-react';
 import { useApp } from '../../../store/useApp';
-import { User as UserType } from '../../../types';
 
 interface AdminClientsTabProps {
   formatBRL: (value: number) => string;

@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     // `supabaseAuthProvider.onSessionChange`) porque precisamos do tipo do
     // evento — especificamente `PASSWORD_RECOVERY`, disparado quando o
     // usuário chega pelo link de e-mail de recuperação de senha.
-    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         if (active) set({ passwordRecoveryMode: true, loading: false });
         return;
