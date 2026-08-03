@@ -17,16 +17,19 @@ Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. O lockfile deve ser usa
 
 ## Banco e migrations
 
-`supabase/schema.sql` é uma fotografia documental do schema atual. Novos ambientes e produção devem usar **somente migrations**, em ordem, sem editar arquivos já aplicados:
+`supabase/schema.sql` é o bootstrap completo para um projeto novo e vazio. Ele não fica em `supabase/migrations`, porque o Supabase Branching cria previews a partir do banco já existente e depois executa as migrations pendentes; tratar o bootstrap como migration tentaria recriar tipos e tabelas existentes.
 
-1. `202608020000_baseline.sql`: baseline completo para instalações novas;
-2. `202608020001_secure_guest_booking_and_profile_phone.sql`: identidade do convidado e telefone do perfil;
-3. `202608020002_gallery_order_and_query_indexes.sql`: `display_order`, índices de paginação e grants explícitos de RPC.
+As migrations em `supabase/migrations` são somente incrementais e devem ser executadas em ordem, sem editar arquivos já aplicados:
+
+1. `202608020001_secure_guest_booking_and_profile_phone.sql`: identidade do convidado e telefone do perfil;
+2. `202608020002_gallery_order_and_query_indexes.sql`: `display_order`, índices de paginação e grants explícitos de RPC.
 
 ```bash
 supabase link --project-ref <project-ref>
 supabase db push
 ```
+
+Para criar um projeto vazio, aplique primeiro `supabase/schema.sql`. Em bancos existentes e nos previews do Supabase Branching, execute apenas `supabase db push`; nunca reaplique o bootstrap.
 
 O `seed.sql` é exclusivamente local. Antes de produção, valide as migrations em uma cópia do banco e mantenha backup/PITR. Rollback deve restaurar o backup ou usar uma nova migration reversa; nunca altere migration aplicada.
 
