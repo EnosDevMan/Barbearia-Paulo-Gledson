@@ -10,10 +10,11 @@ Aplicação React 19, TypeScript, Vite, Zustand e Supabase para agendamento conv
 ```bash
 npm ci
 cp .env.example .env.local
-npm run lint && npm run typecheck && npm test && npm run build
+npm run check
 ```
 
 Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. O lockfile deve ser usado com `npm ci` em CI/Vercel.
+O workflow de CI executa lint, verificação de tipos, testes e build em cada pull request e atualização do branch `master`.
 
 ## Banco e migrations
 
