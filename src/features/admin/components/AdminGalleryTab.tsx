@@ -169,7 +169,7 @@ export const AdminGalleryTab: React.FC<AdminGalleryTabProps> = ({
                 type="button"
                 onClick={() => handleDelete(photo)}
                 aria-label={`Excluir foto ${index + 1}`}
-                className="absolute top-2 right-2 p-2 rounded-full bg-slate-900/70 text-white opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-rose-600"
+                className="absolute top-2 right-2 p-2 rounded-full bg-slate-900/70 text-white transition-colors hover:bg-rose-600"
                 title="Excluir foto"
               >
                 <Trash2 size={14} />
