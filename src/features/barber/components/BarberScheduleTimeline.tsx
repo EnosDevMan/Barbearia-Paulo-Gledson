@@ -1,7 +1,7 @@
 import React from 'react';
-import { Clock, User, Phone, MessageSquare, CheckCircle, Play } from 'lucide-react';
+import { Clock, User, Phone, MessageSquare } from 'lucide-react';
 import { Booking, BookingStatus, BarbershopConfig } from '../../../types';
-import { formatBRL } from '../../../utils/validation';
+import { BookingStatusActions } from '../../../components/BookingStatusActions';
 
 interface BarberScheduleTimelineProps {
   todayBookings: Booking[];
@@ -14,7 +14,6 @@ interface BarberScheduleTimelineProps {
 
 export const BarberScheduleTimeline: React.FC<BarberScheduleTimelineProps> = ({
   todayBookings,
-  config,
   getServiceName,
   getStatusBadgeColor,
   getWhatsAppLink,
@@ -86,46 +85,7 @@ export const BarberScheduleTimeline: React.FC<BarberScheduleTimelineProps> = ({
                 </div>
                 {/* Actions */}
                 <div className="flex gap-2 shrink-0 items-center border-t sm:border-t-0 border-slate-100 pt-3 sm:pt-0 justify-end flex-wrap">
-                  {booking.status === 'Aguardando pagamento' && (
-                    <button
-                      onClick={() => handleStatusChange(booking.id, 'Confirmado')}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs py-1.5 px-3 rounded-lg flex items-center gap-1 cursor-pointer transition-colors"
-                    >
-                      <CheckCircle size={12} /> Confirmar PIX ({formatBRL(config.bookingFee)})
-                    </button>
-                  )}
-                  {booking.status === 'Confirmado' && (
-                    <button
-                      onClick={() => handleStatusChange(booking.id, 'Em atendimento')}
-                      className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-1.5 px-3 rounded-lg flex items-center gap-1 cursor-pointer"
-                    >
-                      <Play size={12} /> Atender
-                    </button>
-                  )}
-                  {booking.status === 'Em atendimento' && (
-                    <button
-                      onClick={() => handleStatusChange(booking.id, 'Concluído')}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-1.5 px-3 rounded-lg flex items-center gap-1 cursor-pointer"
-                    >
-                      <CheckCircle size={12} /> Concluir
-                    </button>
-                  )}
-                  {(booking.status === 'Confirmado' || booking.status === 'Em atendimento' || booking.status === 'Aguardando pagamento') && (
-                    <>
-                      <button
-                        onClick={() => handleStatusChange(booking.id, 'Não compareceu')}
-                        className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-1.5 px-3 rounded-lg cursor-pointer"
-                      >
-                        Faltou
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange(booking.id, 'Cancelado')}
-                        className="bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs py-1.5 px-3 rounded-lg cursor-pointer"
-                      >
-                        Cancelar
-                      </button>
-                    </>
-                  )}
+                  <BookingStatusActions booking={booking} handleStatusChange={handleStatusChange} />
                 </div>
               </div>
             </div>

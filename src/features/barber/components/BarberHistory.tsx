@@ -1,17 +1,20 @@
 import React from 'react';
 import { Booking, BookingStatus } from '../../../types';
 import { formatBRL } from '../../../utils/validation';
+import { BookingStatusActions } from '../../../components/BookingStatusActions';
 
 interface BarberHistoryProps {
   pastBookings: Booking[];
   getServiceName: (id: string) => string;
   getStatusBadgeColor: (status: BookingStatus) => string;
+  handleStatusChange: (id: string, status: BookingStatus) => void | Promise<void>;
 }
 
 export const BarberHistory: React.FC<BarberHistoryProps> = ({
   pastBookings,
   getServiceName,
-  getStatusBadgeColor
+  getStatusBadgeColor,
+  handleStatusChange,
 }) => {
   return (
     <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
@@ -34,6 +37,9 @@ export const BarberHistory: React.FC<BarberHistoryProps> = ({
               <span className={`inline-block mt-1 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${getStatusBadgeColor(booking.status)}`}>
                 {booking.status}
               </span>
+              <div className="flex gap-2 items-center flex-wrap mt-3">
+                <BookingStatusActions booking={booking} handleStatusChange={handleStatusChange} />
+              </div>
             </div>
           ))}
         </div>
