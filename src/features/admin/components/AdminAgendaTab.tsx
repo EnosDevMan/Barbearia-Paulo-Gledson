@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Calendar as CalendarIcon, Search, CalendarPlus, CheckCircle, X } from 'lucide-react';
+import { Calendar as CalendarIcon, Search, CalendarPlus } from 'lucide-react';
 import { useApp } from '../../../store/useApp';
 import { ScheduleBlockForm } from './agenda/ScheduleBlockForm';
 import { AdminBookingForm } from './agenda/AdminBookingForm';
 import { getBarbershopTodayStr } from '../../../utils/validation';
 import { getServiceName as getSharedServiceName, getBarberName as getSharedBarberName } from '../../../utils/lookups';
 import { BookingStatus } from '../../../types';
+import { BookingStatusActions } from '../../../components/BookingStatusActions';
 
 interface AdminAgendaTabProps {
   showFeedback: (msg: string, isError: boolean) => void;
@@ -138,27 +139,8 @@ export const AdminAgendaTab: React.FC<AdminAgendaTabProps> = ({ showFeedback }) 
                       </div>
                     </div>
 
-                    {/* BOTÕES DE AÇÃO - NOVO! */}
-                    <div className="flex gap-2 items-center sm:items-start">
-                      {booking.status === 'Aguardando pagamento' && (
-                        <>
-                          <button
-                            onClick={() => handleStatusChange(booking.id, 'Confirmado')}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-1.5 px-2.5 rounded-lg flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap shadow-sm"
-                            title="Confirmar pagamento"
-                          >
-                            <CheckCircle size={12} />
-                            Confirmar
-                          </button>
-                          <button
-                            onClick={() => handleStatusChange(booking.id, 'Cancelado')}
-                            className="bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs py-1.5 px-2.5 rounded-lg flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap shadow-sm"
-                            title="Cancelar agendamento"
-                          >
-                            <X size={12} />
-                          </button>
-                        </>
-                      )}
+                    <div className="flex gap-2 items-center sm:items-start flex-wrap">
+                      <BookingStatusActions booking={booking} handleStatusChange={handleStatusChange} />
                     </div>
                   </div>
                 </div>

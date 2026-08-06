@@ -216,6 +216,7 @@ const BarberDashboardInner: React.FC = () => {
               pastBookings={pastBookings}
               getServiceName={getServiceName}
               getStatusBadgeColor={getStatusBadgeColor}
+              handleStatusChange={handleStatusChange}
             />
           </section>
         )}
