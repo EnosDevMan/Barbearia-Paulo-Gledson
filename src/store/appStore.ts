@@ -3,6 +3,7 @@ import { useAuth } from '../auth/hooks/useAuth';
 import { useConfigStore } from './configStore';
 import { useDataStore } from './dataStore';
 import { timeToMinutes, minutesToTime, getBarbershopNow, getWeekdayFromISODate } from '../utils/validation';
+import { generateSlotStartMinutes } from '../utils/scheduling';
 import { Booking } from '../types';
 
 /**
@@ -169,7 +170,11 @@ export const useAppStore = () => {
     const { dateStr: todayStr, hours: nowHours, minutes: nowMinutes } = getBarbershopNow();
     const nowMins = nowHours * 60 + nowMinutes;
 
-    for (let current = openMins; current + duration + interval <= closeMins; current += interval) {
+    // Cada candidato começa somente depois da duração do serviço anterior e
+    // do intervalo de preparação configurado. Antes, o laço avançava apenas
+    // `interval`, criando candidatos em uma cadência incorreta.
+    const candidateStarts = generateSlotStartMinutes(openMins, closeMins, duration, interval);
+    for (const current of candidateStarts) {
       const timeStr = minutesToTime(current);
 
       if (date === todayStr && current <= nowMins + 30) {
