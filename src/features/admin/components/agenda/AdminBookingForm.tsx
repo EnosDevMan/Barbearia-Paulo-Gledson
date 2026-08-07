@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../../store/useApp';
 import { BookingStatus } from '../../../../types';
+import { getErrorMessage } from '../../../../utils/errors';
 
 interface AdminBookingFormProps {
   showFeedback: (msg: string, isError: boolean) => void;
@@ -19,8 +20,9 @@ export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({ showFeedback
   const [adminNotes, setAdminNotes] = useState('');
   const [adminFeePaid, setAdminFeePaid] = useState(true);
   const [adminStatus, setAdminStatus] = useState<BookingStatus>('Confirmado');
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleAdminBookingSubmit = (e: React.FormEvent) => {
+  const handleAdminBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!adminCustName || !adminCustPhone || !adminBarberId || !adminServiceId || !adminDate || !adminTime) {
@@ -45,39 +47,44 @@ export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({ showFeedback
       return sum + (s ? s.price : 0);
     }, 0);
 
-    addBooking({
-      // 'guest' é o sentinel que dataService.createBooking já converte para
-      // customer_id = null. O valor anterior (`cust-admin-${Date.now()}`)
-      // não é um UUID válido e fazia essa gravação falhar sempre, com um
-      // erro de tipo do Postgres, todas as vezes que o admin cadastrava um
-      // agendamento manualmente (walk-in).
-      customerId: 'guest',
-      customerName: adminCustName,
-      customerPhone: adminCustPhone,
-      barberId: adminBarberId,
-      serviceId: adminServiceId,
-      date: adminDate,
-      time: adminTime,
-      status: adminStatus,
-      value: val,
-      feePaid: adminFeePaid,
-      notes: adminNotes
-    });
+    setIsSaving(true);
+    try {
+      await addBooking({
+        // 'guest' é o sentinel que dataService.createBooking já converte para
+        // customer_id = null. O valor anterior (`cust-admin-${Date.now()}`)
+        // não é um UUID válido e fazia essa gravação falhar sempre, com um
+        // erro de tipo do Postgres, todas as vezes que o admin cadastrava um
+        // agendamento manualmente (walk-in).
+        customerId: 'guest',
+        customerName: adminCustName,
+        customerPhone: adminCustPhone,
+        barberId: adminBarberId,
+        serviceId: adminServiceId,
+        date: adminDate,
+        time: adminTime,
+        status: adminStatus,
+        value: val,
+        feePaid: adminFeePaid,
+        notes: adminNotes
+      });
 
-    showFeedback('Agendamento criado com sucesso!', false);
-    
-    // Reset form
-    setAdminCustName('');
-    setAdminCustPhone('');
-    setAdminBarberId('');
-    setAdminServiceId('');
-    setAdminDate('');
-    setAdminTime('');
-    setAdminNotes('');
-    setAdminStatus('Confirmado');
+      showFeedback('Agendamento confirmado com sucesso', false);
 
-    if (onSuccess) {
-      onSuccess();
+      // Limpa e fecha o formulário somente depois da confirmação do banco.
+      setAdminCustName('');
+      setAdminCustPhone('');
+      setAdminBarberId('');
+      setAdminServiceId('');
+      setAdminDate('');
+      setAdminTime('');
+      setAdminNotes('');
+      setAdminStatus('Confirmado');
+
+      onSuccess?.();
+    } catch (err) {
+      showFeedback(getErrorMessage(err, 'Erro ao salvar agendamento. Tente novamente.'), true);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -114,8 +121,8 @@ export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({ showFeedback
           <option value="Concluído">Concluído</option>
         </select>
 
-        <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold transition-colors shadow-sm">
-          Salvar
+        <button type="submit" disabled={isSaving} className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 text-white py-2 rounded-lg font-bold transition-colors shadow-sm">
+          {isSaving ? 'Salvando...' : 'Salvar'}
         </button>
       </div>
     </form>
