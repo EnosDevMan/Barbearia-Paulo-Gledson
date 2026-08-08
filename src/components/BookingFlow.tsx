@@ -36,6 +36,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({ onSuccess, onNavigateT
     setSelectedTime,
     availableTimes,
     loadingTimes,
+    slotsError,
     
     custName, setCustName,
     custPhone, setCustPhone,
@@ -124,6 +125,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({ onSuccess, onNavigateT
             setSelectedTime={setSelectedTime}
             availableTimes={availableTimes}
             loadingTimes={loadingTimes}
+            slotsError={slotsError}
           />
         )}
         

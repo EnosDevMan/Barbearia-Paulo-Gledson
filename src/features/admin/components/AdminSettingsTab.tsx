@@ -93,6 +93,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
   const [confHeroSubtitle, setConfHeroSubtitle] = useState(config.heroSubtitle || '');
   const [confHeroDescription, setConfHeroDescription] = useState(config.heroDescription || '');
   const [confAboutText, setConfAboutText] = useState(config.aboutText || '');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Estado para abas expansíveis (mobile)
   const [expandedSection, setExpandedSection] = useState<string | null>('basic');
@@ -101,26 +102,50 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
     setWeeklySchedule(current => ({ ...current, [day]: { ...current[day], ...patch } }));
 
   const handleSaveConfig = async () => {
+    if (isSaving) return;
     const intervalMinutes = Number(confInterval);
+    const toleranceMinutes = Number(confTolerance);
+    const bookingFee = parseBRNumber(confFee);
+    if (!confName.trim() || !confAddress.trim() || !confPhone.trim()) {
+      showFeedback('Preencha nome, endereço e telefone do estabelecimento.', true);
+      return;
+    }
     if (!Number.isFinite(intervalMinutes) || intervalMinutes < 1) {
       showFeedback('O intervalo dos horários deve ser de pelo menos 1 minuto.', true);
       return;
     }
+    if (!Number.isFinite(toleranceMinutes) || toleranceMinutes < 0) {
+      showFeedback('A tolerância deve ser um número maior ou igual a zero.', true);
+      return;
+    }
+    if (!Number.isFinite(bookingFee) || bookingFee < 0) {
+      showFeedback('A taxa de reserva deve ser um valor válido maior ou igual a zero.', true);
+      return;
+    }
+    const invalidDay = WEEK_DAYS.find(day => {
+      const hours = weeklySchedule[day.id];
+      return !hours.closed && (!hours.open || !hours.close || hours.open >= hours.close);
+    });
+    if (invalidDay) {
+      showFeedback(`O horário de ${invalidDay.label} precisa abrir antes do fechamento.`, true);
+      return;
+    }
 
     try {
+      setIsSaving(true);
       await updateConfig({
-        name: confName,
-        address: confAddress,
-        phone: confPhone,
+        name: confName.trim(),
+        address: confAddress.trim(),
+        phone: confPhone.trim(),
         workingHours: {
           open: weeklySchedule[1].open,
           close: weeklySchedule[1].close,
           daysOpen: WEEK_DAYS.filter(day => !weeklySchedule[day.id].closed).map(day => day.id).sort(),
           weeklySchedule
         },
-        bookingFee: parseBRNumber(confFee),
+        bookingFee,
         pixKey: confPixKey,
-        toleranceMinutes: Number(confTolerance),
+        toleranceMinutes,
         intervalMinutes,
         socialLinks: {
           instagram: confInsta,
@@ -135,6 +160,8 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
       showFeedback('Configurações salvas com sucesso!', false);
     } catch (err) {
       showFeedback(getErrorMessage(err, 'Erro ao salvar configurações.'), true);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -151,10 +178,11 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
           </div>
           <button
             onClick={handleSaveConfig}
-            className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-slate-900/10 w-full sm:w-auto"
+            disabled={isSaving}
+            className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-md shadow-slate-900/10 w-full sm:w-auto"
           >
             <Save size={18} />
-            Salvar
+            {isSaving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </div>

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApp } from './store/useApp';
 import { AppDataLoader } from './store/AppDataLoader';
 import { Navbar } from './components/Navbar';
@@ -26,6 +26,7 @@ function BarbeariaApp() {
   const [bookingSelection, setBookingSelection] = useState<{ serviceId?: string; barberId?: string }>({});
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState('');
+  const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { loading, loadError, currentUser, passwordRecoveryMode, completePasswordRecovery, logout } = useApp();
 
   useEffect(() => {
@@ -34,6 +35,10 @@ function BarbeariaApp() {
       setCurrentView('landing');
     }
   }, [currentUser, currentView, loading]);
+
+  useEffect(() => () => {
+    if (transitionTimer.current) clearTimeout(transitionTimer.current);
+  }, []);
 
   if (loading) {
     return <LoadingScreen />;
@@ -70,27 +75,35 @@ function BarbeariaApp() {
       return;
     }
 
+    // Uma navegação nova sempre invalida a transição anterior. Sem isso,
+    // cliques rápidos podiam executar timers fora de ordem e abrir uma tela
+    // diferente da última escolhida pelo usuário.
+    if (transitionTimer.current) clearTimeout(transitionTimer.current);
+
     if (view === 'booking') {
       setBookingSelection(selection || {});
       setIsTransitioning(true);
       setTransitionMessage('Preparando a agenda...');
-      setTimeout(() => {
+      transitionTimer.current = setTimeout(() => {
         setCurrentView(view);
         setIsTransitioning(false);
+        transitionTimer.current = null;
       }, 750);
     } else if (view === 'customer' && currentView === 'booking') {
       setIsTransitioning(true);
       setTransitionMessage('Carregando seus agendamentos...');
-      setTimeout(() => {
+      transitionTimer.current = setTimeout(() => {
         setCurrentView(view);
         setIsTransitioning(false);
+        transitionTimer.current = null;
       }, 700);
     } else {
       setIsTransitioning(true);
       setTransitionMessage('Carregando...');
-      setTimeout(() => {
+      transitionTimer.current = setTimeout(() => {
         setCurrentView(view);
         setIsTransitioning(false);
+        transitionTimer.current = null;
       }, 450);
     }
   };

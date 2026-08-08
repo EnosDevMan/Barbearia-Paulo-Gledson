@@ -436,7 +436,8 @@ export const dataService = {
 
   async getUser(id: string): Promise<User | null> {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', id).maybeSingle();
-    if (error || !data) return null;
+    throwIfError(error);
+    if (!data) return null;
     return mapProfile(data);
   },
 

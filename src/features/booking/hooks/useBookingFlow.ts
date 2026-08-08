@@ -21,6 +21,7 @@ export const useBookingFlow = (onSuccess?: (bookingId: string) => void, initialS
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [loadingTimes, setLoadingTimes] = useState(false);
+  const [slotsError, setSlotsError] = useState('');
 
   const [custName, setCustName] = useState('');
   const [custPhone, setCustPhone] = useState('');
@@ -67,6 +68,7 @@ export const useBookingFlow = (onSuccess?: (bookingId: string) => void, initialS
     if (selectedBarber && selectedDate && selectedServices.length > 0) {
       const serviceIds = selectedServices.map(s => s.id).join(",");
       setLoadingTimes(true);
+      setSlotsError('');
       getAvailableSlots(selectedBarber.id, serviceIds, selectedDate)
         .then(times => {
           if (cancelled) return;
@@ -76,14 +78,18 @@ export const useBookingFlow = (onSuccess?: (bookingId: string) => void, initialS
           // escolher novamente.
           setSelectedTime(prevTime => (prevTime && !times.includes(prevTime) ? '' : prevTime));
         })
-        .catch(() => {
-          if (!cancelled) setAvailableTimes([]);
+        .catch((err: unknown) => {
+          if (!cancelled) {
+            setAvailableTimes([]);
+            setSlotsError(getErrorMessage(err, 'Não foi possível consultar os horários. Tente novamente.'));
+          }
         })
         .finally(() => {
           if (!cancelled) setLoadingTimes(false);
         });
     } else {
       setAvailableTimes([]);
+      setSlotsError('');
     }
 
     return () => { cancelled = true; };
@@ -202,6 +208,7 @@ export const useBookingFlow = (onSuccess?: (bookingId: string) => void, initialS
     setSelectedTime,
     availableTimes,
     loadingTimes,
+    slotsError,
     
     custName, setCustName,
     custPhone, setCustPhone,
