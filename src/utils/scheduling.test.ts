@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateSlotStartMinutes } from './scheduling';
+import { generateSlotStartMinutes, getAvailability } from './scheduling';
 
 describe('generateSlotStartMinutes', () => {
   it.each([
@@ -26,5 +26,31 @@ describe('generateSlotStartMinutes', () => {
     expect(generateSlotStartMinutes(540, 660, 0, 10)).toEqual([]);
     expect(generateSlotStartMinutes(540, 660, 30, -1)).toEqual([]);
     expect(generateSlotStartMinutes(660, 540, 30, 10)).toEqual([]);
+  });
+});
+
+describe('getAvailability', () => {
+  const input = {
+    barberId: 'barber-1',
+    date: '2026-08-10',
+    duration: 30,
+    intervalMinutes: 0,
+    shopHours: { open: '09:00', close: '11:00', daysOpen: [1] },
+    bookings: [{
+      id: 'booking-1', customerId: 'customer-1', customerName: 'Cliente',
+      customerPhone: '85999999999', barberId: 'barber-1', serviceId: 'service-1',
+      date: '2026-08-10', time: '09:00', status: 'Confirmado' as const,
+      feePaid: true, value: 30, createdAt: '2026-08-01T00:00:00Z',
+    }],
+    blocks: [],
+    services: [{ id: 'service-1', name: 'Corte', duration: 30, price: 30, description: '', category: 'Corte' }],
+  };
+
+  it('mantém o horário ocupado nos fluxos de criação', () => {
+    expect(getAvailability(input).find(slot => slot.time === '09:00')?.status).toBe('occupied');
+  });
+
+  it('ignora somente o próprio agendamento durante o reagendamento', () => {
+    expect(getAvailability({ ...input, excludeBookingId: 'booking-1' }).find(slot => slot.time === '09:00')?.status).toBe('available');
   });
 });
