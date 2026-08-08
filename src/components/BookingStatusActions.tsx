@@ -37,12 +37,12 @@ export const BookingStatusActions: React.FC<BookingStatusActionsProps> = ({
           <CheckCircle size={12} /> Confirmar PIX
         </button>
       )}
-      {booking.status === 'Em atendimento' && (
+      {booking.status === 'Confirmado' && (
         <button
           onClick={() => handleStatusChange(booking.id, 'Concluído')}
           className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-1.5 px-3 rounded-lg flex items-center gap-1 cursor-pointer"
         >
-          <CheckCircle size={12} /> Concluir
+          <CheckCircle size={12} /> Cliente atendido
         </button>
       )}
       {onReschedule && booking.status !== 'Em atendimento' && <button
