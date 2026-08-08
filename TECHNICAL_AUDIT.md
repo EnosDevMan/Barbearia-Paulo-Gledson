@@ -43,6 +43,23 @@ build de produção.
 8. **Divisão de bundle ineficaz.** O provedor de autenticação era importado de
    forma estática pela store e dinâmica pelo modal, gerando aviso no build sem
    benefício de carregamento. O modal agora usa a importação estática coerente.
+9. **Falha de agenda apresentada como lotação.** No agendamento público, uma
+   indisponibilidade de rede/banco era convertida silenciosamente em lista
+   vazia. Agora a tela diferencia erro operacional de um dia realmente sem
+   vagas e orienta uma nova tentativa, evitando informação enganosa.
+10. **Erro de perfil tratado como usuário inexistente.** A consulta de perfil
+    descartava qualquer erro do Supabase, inclusive falhas de rede e permissão.
+    Somente a ausência real do registro agora retorna `null`; erros operacionais
+    percorrem o fluxo de tratamento existente.
+11. **Corrida entre navegações.** Cliques rápidos criavam timers concorrentes e
+    uma transição antiga podia abrir uma tela diferente da última selecionada.
+    A aplicação agora cancela a transição pendente e também limpa o timer ao
+    desmontar.
+12. **Configurações inválidas e envios duplicados.** Era possível persistir taxa
+    negativa/ilegível, tolerância inválida e expediente com abertura posterior
+    ao fechamento, além de disparar salvamentos simultâneos. O formulário agora
+    valida esses estados, normaliza campos básicos e bloqueia reenvio enquanto
+    aguarda a confirmação do banco.
 
 ## Controles existentes validados
 
@@ -75,6 +92,18 @@ build de produção.
 - `src/components/LoginModal.tsx`: envio único e resiliente da recuperação de
   senha, com feedback visual durante a requisição.
 - `src/App.tsx`: redirecionamento seguro para o início após perda da sessão.
+- `src/features/booking/hooks/useBookingFlow.ts` e
+  `src/features/booking/components/DateTimeSelectionStep.tsx`: estado de erro
+  explícito na consulta de disponibilidade, sem confundi-lo com agenda lotada.
+- `src/features/booking/components/DateTimeSelectionStep.test.tsx`: cobertura de
+  regressão para a distinção entre erro operacional e ausência real de vagas.
+- `src/components/BookingFlow.tsx`: propagação do estado de falha até a etapa de
+  seleção de data e horário.
+- `src/services/dataService.ts`: preservação de erros operacionais na consulta
+  de perfil.
+- `src/features/admin/components/AdminSettingsTab.tsx`: validação preventiva de
+  configurações e proteção contra persistências simultâneas.
+- `src/App.tsx`: cancelamento determinístico de transições concorrentes.
 
 ## Riscos e melhorias futuras
 

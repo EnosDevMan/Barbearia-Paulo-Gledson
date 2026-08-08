@@ -9,6 +9,7 @@ interface Props {
   setSelectedTime: (time: string) => void;
   availableTimes: string[];
   loadingTimes?: boolean;
+  slotsError?: string;
 }
 
 export const DateTimeSelectionStep: React.FC<Props> = ({
@@ -17,7 +18,8 @@ export const DateTimeSelectionStep: React.FC<Props> = ({
   selectedTime,
   setSelectedTime,
   availableTimes,
-  loadingTimes
+  loadingTimes,
+  slotsError
 }) => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -51,6 +53,12 @@ export const DateTimeSelectionStep: React.FC<Props> = ({
           <div className="flex items-center justify-center gap-2 py-8 bg-slate-50 rounded-xl border border-slate-100 text-slate-400">
             <Loader2 size={18} className="animate-spin" />
             <span className="text-sm">Verificando horários disponíveis...</span>
+          </div>
+        ) : slotsError ? (
+          <div role="alert" className="text-center py-8 px-4 bg-red-50 rounded-xl border border-red-200">
+            <Clock size={24} className="mx-auto text-red-400 mb-2" />
+            <p className="text-sm font-semibold text-red-700">{slotsError}</p>
+            <p className="mt-1 text-xs text-red-600">Altere a data para tentar novamente.</p>
           </div>
         ) : availableTimes.length > 0 ? (
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
