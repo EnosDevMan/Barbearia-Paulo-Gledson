@@ -48,15 +48,15 @@ export const useAdminDashboard = () => {
   const getServiceName = (id: string) => getSharedServiceName(services, id);
 
   const navItems = [
-    { id: 'overview', label: 'Hoje', icon: LayoutDashboard },
-    { id: 'new-booking', label: 'Novo Agendamento', icon: CalendarPlus },
-    { id: 'agenda', label: 'Agenda Completa', icon: CalendarDays },
-    { id: 'reports', label: 'Relatórios', icon: BarChart3 },
-    { id: 'services', label: 'Serviços', icon: Scissors },
-    { id: 'barbers', label: 'Profissionais', icon: Users },
-    { id: 'gallery', label: 'Galeria', icon: Camera },
-    { id: 'clients', label: 'Clientes', icon: Users },
-    { id: 'settings', label: 'Configurações', icon: Settings },
+    { id: 'overview', label: 'Visão geral', description: 'Resumo e prioridades do dia', group: 'Operação', icon: LayoutDashboard },
+    { id: 'new-booking', label: 'Novo agendamento', description: 'Reserve um horário para o cliente', group: 'Operação', icon: CalendarPlus },
+    { id: 'agenda', label: 'Agenda', description: 'Consulte e organize os horários', group: 'Operação', icon: CalendarDays },
+    { id: 'clients', label: 'Clientes', description: 'Histórico e informações dos clientes', group: 'Gestão', icon: Users },
+    { id: 'reports', label: 'Relatórios', description: 'Indicadores financeiros e desempenho', group: 'Gestão', icon: BarChart3 },
+    { id: 'services', label: 'Serviços', description: 'Catálogo, duração e preços', group: 'Cadastros', icon: Scissors },
+    { id: 'barbers', label: 'Profissionais', description: 'Equipe e disponibilidade', group: 'Cadastros', icon: Users },
+    { id: 'gallery', label: 'Galeria', description: 'Imagens exibidas no site', group: 'Cadastros', icon: Camera },
+    { id: 'settings', label: 'Configurações', description: 'Dados e preferências da barbearia', group: 'Sistema', icon: Settings },
   ] as const;
 
   return {

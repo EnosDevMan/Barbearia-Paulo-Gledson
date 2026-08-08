@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, Clock, UserPlus, Calendar as CalendarIcon, CheckCircle, XCircle, ArrowRight, User, Scissors, CalendarPlus, Search } from 'lucide-react';
+import { DollarSign, Clock, UserPlus, Calendar as CalendarIcon, CheckCircle, XCircle, ArrowRight, User, Scissors } from 'lucide-react';
 import { useApp } from '../../../store/useApp';
 import { BookingStatus } from '../../../types';
 import { getBarbershopTodayStr } from '../../../utils/validation';
@@ -14,8 +14,6 @@ interface AdminOverviewTabProps {
   getServiceName: (id: string) => string;
   handleUpdateBookingStatus: (id: string, newStatus: BookingStatus) => Promise<void>;
   onViewFullReport: () => void;
-  onNewBooking: () => void;
-  onViewAgenda: () => void;
   showFeedback: (message: string, isError: boolean) => void;
 }
 
@@ -32,8 +30,6 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
   getServiceName,
   handleUpdateBookingStatus,
   onViewFullReport,
-  onNewBooking,
-  onViewAgenda,
   showFeedback,
 }) => {
   const { bookings, users } = useApp();
@@ -85,24 +81,18 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
         <div>
-          <h2 className="font-extrabold text-slate-900 text-lg tracking-tight">Centro operacional</h2>
-          <p className="text-xs text-slate-500 mt-0.5 capitalize">{todayLabel}</p>
+          <p className="text-xs font-semibold text-slate-400">Resumo de hoje</p>
+          <p className="text-sm font-bold text-slate-800 mt-0.5 capitalize">{todayLabel}</p>
         </div>
         <button
           onClick={onViewFullReport}
-          className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-4 py-2.5 rounded-xl transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 px-2 py-2 rounded-lg transition-colors"
         >
           Ver relatório completo <ArrowRight size={14} />
         </button>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button onClick={onNewBooking} className="flex items-center gap-3 rounded-2xl bg-indigo-600 text-white p-4 text-left shadow-sm hover:bg-indigo-700"><CalendarPlus size={22} /><span><strong className="block">Novo agendamento</strong><small className="text-indigo-100">Encontre um horário livre</small></span></button>
-        <button onClick={onViewAgenda} className="flex items-center gap-3 rounded-2xl bg-white border border-slate-200 p-4 text-left hover:border-indigo-300"><Search size={22} className="text-indigo-600" /><span><strong className="block text-slate-900">Consultar agenda</strong><small className="text-slate-500">Períodos e filtros avançados</small></span></button>
-        <button onClick={onViewFullReport} className="flex items-center gap-3 rounded-2xl bg-white border border-slate-200 p-4 text-left hover:border-indigo-300"><DollarSign size={22} className="text-emerald-600" /><span><strong className="block text-slate-900">Ver financeiro</strong><small className="text-slate-500">Resultados e histórico</small></span></button>
       </div>
 
       {/* Bento Stats Row — tudo escopado a hoje */}
