@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarClock, CheckCircle, Play } from 'lucide-react';
+import { CalendarClock, CheckCircle } from 'lucide-react';
 import { Booking, BookingStatus } from '../types';
 
 interface BookingStatusActionsProps {
@@ -35,14 +35,6 @@ export const BookingStatusActions: React.FC<BookingStatusActionsProps> = ({
           className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs py-1.5 px-3 rounded-lg flex items-center gap-1 cursor-pointer transition-colors"
         >
           <CheckCircle size={12} /> Confirmar PIX
-        </button>
-      )}
-      {booking.status === 'Confirmado' && (
-        <button
-          onClick={() => handleStatusChange(booking.id, 'Em atendimento')}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-1.5 px-3 rounded-lg flex items-center gap-1 cursor-pointer"
-        >
-          <Play size={12} /> Atender
         </button>
       )}
       {booking.status === 'Em atendimento' && (

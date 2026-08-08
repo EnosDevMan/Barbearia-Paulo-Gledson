@@ -21,7 +21,6 @@ const createBooking = (status: BookingStatus): Booking => ({
 describe('BookingStatusActions', () => {
   it.each([
     ['Aguardando pagamento', 'Confirmar PIX', 'Confirmado'],
-    ['Confirmado', 'Atender', 'Em atendimento'],
     ['Em atendimento', 'Concluir', 'Concluído'],
   ] as const)('oferece a próxima transição válida para %s', (current, label, next) => {
     const handleStatusChange = vi.fn();
@@ -35,6 +34,19 @@ describe('BookingStatusActions', () => {
     fireEvent.click(screen.getByRole('button', { name: label }));
 
     expect(handleStatusChange).toHaveBeenCalledWith('booking-1', next);
+    expect(screen.getByRole('button', { name: 'Faltou' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
+  });
+
+  it('não exibe a ação de atender para um agendamento confirmado', () => {
+    render(
+      <BookingStatusActions
+        booking={createBooking('Confirmado')}
+        handleStatusChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Atender' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Faltou' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
   });
