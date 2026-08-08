@@ -1,8 +1,12 @@
 import React from 'react';
-import { DollarSign, Clock, UserPlus, Calendar as CalendarIcon, CheckCircle, XCircle, ArrowRight, User, Scissors } from 'lucide-react';
+import { DollarSign, Clock, UserPlus, Calendar as CalendarIcon, CheckCircle, XCircle, ArrowRight, User, Scissors, CalendarPlus, Search } from 'lucide-react';
 import { useApp } from '../../../store/useApp';
 import { BookingStatus } from '../../../types';
 import { getBarbershopTodayStr } from '../../../utils/validation';
+import { Booking } from '../../../types';
+import { BookingStatusActions } from '../../../components/BookingStatusActions';
+import { AdminRescheduleDialog } from './agenda/AdminRescheduleDialog';
+import { useState } from 'react';
 
 interface AdminOverviewTabProps {
   formatBRL: (value: number) => string;
@@ -10,6 +14,9 @@ interface AdminOverviewTabProps {
   getServiceName: (id: string) => string;
   handleUpdateBookingStatus: (id: string, newStatus: BookingStatus) => Promise<void>;
   onViewFullReport: () => void;
+  onNewBooking: () => void;
+  onViewAgenda: () => void;
+  showFeedback: (message: string, isError: boolean) => void;
 }
 
 /**
@@ -25,9 +32,13 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
   getServiceName,
   handleUpdateBookingStatus,
   onViewFullReport,
+  onNewBooking,
+  onViewAgenda,
+  showFeedback,
 }) => {
   const { bookings, users } = useApp();
   const todayStr = getBarbershopTodayStr();
+  const [rescheduling, setRescheduling] = useState<Booking | null>(null);
 
   const todayBookings = bookings
     .filter(b => b.date === todayStr)
@@ -65,23 +76,10 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
   );
 
   const renderActions = (booking: typeof todayBookings[number]) => {
-    if (booking.status !== 'Confirmado') return null;
+    if (booking.status === 'Concluído' || booking.status === 'Cancelado' || booking.status === 'Não compareceu' || booking.status === 'Reagendado') return null;
     return (
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => handleUpdateBookingStatus(booking.id, 'Concluído')}
-          className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-200"
-          title="Marcar como Concluído"
-        >
-          <CheckCircle size={16} />
-        </button>
-        <button
-          onClick={() => handleUpdateBookingStatus(booking.id, 'Cancelado')}
-          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
-          title="Cancelar"
-        >
-          <XCircle size={16} />
-        </button>
+      <div className="flex items-center gap-2 flex-wrap">
+        <BookingStatusActions booking={booking} handleStatusChange={handleUpdateBookingStatus} onReschedule={setRescheduling} />
       </div>
     );
   };
@@ -90,7 +88,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="font-extrabold text-slate-900 text-lg tracking-tight">Relatório Diário</h2>
+          <h2 className="font-extrabold text-slate-900 text-lg tracking-tight">Centro operacional</h2>
           <p className="text-xs text-slate-500 mt-0.5 capitalize">{todayLabel}</p>
         </div>
         <button
@@ -99,6 +97,12 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         >
           Ver relatório completo <ArrowRight size={14} />
         </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <button onClick={onNewBooking} className="flex items-center gap-3 rounded-2xl bg-indigo-600 text-white p-4 text-left shadow-sm hover:bg-indigo-700"><CalendarPlus size={22} /><span><strong className="block">Novo agendamento</strong><small className="text-indigo-100">Encontre um horário livre</small></span></button>
+        <button onClick={onViewAgenda} className="flex items-center gap-3 rounded-2xl bg-white border border-slate-200 p-4 text-left hover:border-indigo-300"><Search size={22} className="text-indigo-600" /><span><strong className="block text-slate-900">Consultar agenda</strong><small className="text-slate-500">Períodos e filtros avançados</small></span></button>
+        <button onClick={onViewFullReport} className="flex items-center gap-3 rounded-2xl bg-white border border-slate-200 p-4 text-left hover:border-indigo-300"><DollarSign size={22} className="text-emerald-600" /><span><strong className="block text-slate-900">Ver financeiro</strong><small className="text-slate-500">Resultados e histórico</small></span></button>
       </div>
 
       {/* Bento Stats Row — tudo escopado a hoje */}
@@ -217,6 +221,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
           </>
         )}
       </div>
+      {rescheduling && <AdminRescheduleDialog booking={rescheduling} onClose={() => setRescheduling(null)} showFeedback={showFeedback} />}
     </div>
   );
 };
