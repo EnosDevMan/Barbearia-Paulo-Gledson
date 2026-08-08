@@ -40,6 +40,11 @@ body {
   background-color: var(--color-brand-cream);
 }
 
+/* 16px prevents Safari/iOS from zooming focused form controls. */
+@media (max-width: 639px) {
+  input, textarea, select { font-size: 16px !important; }
+}
+
 html, body, #root { max-width: 100%; overflow-x: clip; }
 button, a, input, textarea, select { touch-action: manipulation; }
 .services-rail { scroll-behavior: smooth; overscroll-behavior-inline: contain; touch-action: pan-x pan-y; scrollbar-width: thin; }

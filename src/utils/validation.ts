@@ -187,3 +187,13 @@ export const summarizeWorkingDays = (
 
   return result;
 };
+
+/** Produces the public company schedule, including distinct hours per day. */
+export const summarizeWeeklySchedule = (hours: import('../types').WorkingHours): { label: string; value: string }[] => {
+  if (!hours.weeklySchedule) return summarizeWorkingDays(hours.daysOpen, hours.open, hours.close);
+  return WEEKDAY_LABELS.map((label, day) => {
+    const current = hours.weeklySchedule?.[day];
+    const closed = current?.closed ?? !hours.daysOpen.includes(day);
+    return { label, value: closed ? 'Fechado' : `${current?.open ?? hours.open} - ${current?.close ?? hours.close}` };
+  });
+};

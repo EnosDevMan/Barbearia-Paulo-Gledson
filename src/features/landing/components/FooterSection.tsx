@@ -1,7 +1,7 @@
 import React from 'react';
 import { Scissors, Instagram, Facebook, MapPin, Phone, WalletCards } from 'lucide-react';
 import { BarbershopConfig } from '../../../types';
-import { summarizeWorkingDays } from '../../../utils/validation';
+import { summarizeWeeklySchedule } from '../../../utils/validation';
 
 interface FooterSectionProps {
   config: BarbershopConfig;
@@ -49,7 +49,7 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ config, onOpenPriv
         <div className="space-y-5">
           <h4 className="text-white font-extrabold text-sm uppercase tracking-widest text-slate-200">Atendimento</h4>
           <ul className="space-y-3 text-xs md:text-sm">
-            {summarizeWorkingDays(config.workingHours.daysOpen, config.workingHours.open, config.workingHours.close).map(({ label, value }) => (
+            {summarizeWeeklySchedule(config.workingHours).map(({ label, value }) => (
               <li key={label} className={`flex justify-between border-b border-white/10 pb-2 ${value === 'Fechado' ? 'text-slate-500' : ''}`}>
                 <span className="text-slate-400">{label}:</span>
                 {value === 'Fechado' ? (
