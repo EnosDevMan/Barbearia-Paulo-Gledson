@@ -1,10 +1,11 @@
 import React from 'react';
-import { CheckCircle, Play } from 'lucide-react';
+import { CalendarClock, CheckCircle, Play } from 'lucide-react';
 import { Booking, BookingStatus } from '../types';
 
 interface BookingStatusActionsProps {
   booking: Booking;
   handleStatusChange: (id: string, status: BookingStatus) => void | Promise<void>;
+  onReschedule?: (booking: Booking) => void;
 }
 
 /**
@@ -17,6 +18,7 @@ interface BookingStatusActionsProps {
 export const BookingStatusActions: React.FC<BookingStatusActionsProps> = ({
   booking,
   handleStatusChange,
+  onReschedule,
 }) => {
   const isActive =
     booking.status === 'Aguardando pagamento' ||
@@ -51,6 +53,10 @@ export const BookingStatusActions: React.FC<BookingStatusActionsProps> = ({
           <CheckCircle size={12} /> Concluir
         </button>
       )}
+      {onReschedule && booking.status !== 'Em atendimento' && <button
+        onClick={() => onReschedule(booking)}
+        className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs py-1.5 px-3 rounded-lg flex items-center gap-1"
+      ><CalendarClock size={12} /> Reagendar</button>}
       <button
         onClick={() => handleStatusChange(booking.id, 'Não compareceu')}
         className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-1.5 px-3 rounded-lg cursor-pointer"

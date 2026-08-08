@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../../../store/useApp';
-import { TrendingUp, BarChart3, Calendar as CalendarIcon, Scissors, Users, Settings, Camera } from 'lucide-react';
+import { LayoutDashboard, BarChart3, CalendarDays, CalendarPlus, Scissors, Users, Settings, Camera } from 'lucide-react';
 import { formatBRL } from '../../../utils/validation';
 import { getErrorMessage } from '../../../utils/errors';
 import { getServiceName as getSharedServiceName, getBarberName as getSharedBarberName } from '../../../utils/lookups';
@@ -9,7 +9,7 @@ import { BookingStatus } from '../../../types';
 export const useAdminDashboard = () => {
   const { config, currentUser, barbers, services, updateBookingStatus } = useApp();
   
-  const [activeTab, setActiveTab] = useState<'overview' | 'reports' | 'services' | 'barbers' | 'gallery' | 'clients' | 'agenda' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'new-booking' | 'reports' | 'services' | 'barbers' | 'gallery' | 'clients' | 'agenda' | 'settings'>('overview');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -48,9 +48,10 @@ export const useAdminDashboard = () => {
   const getServiceName = (id: string) => getSharedServiceName(services, id);
 
   const navItems = [
-    { id: 'overview', label: 'Visão Geral', icon: TrendingUp },
+    { id: 'overview', label: 'Hoje', icon: LayoutDashboard },
+    { id: 'new-booking', label: 'Novo Agendamento', icon: CalendarPlus },
+    { id: 'agenda', label: 'Agenda Completa', icon: CalendarDays },
     { id: 'reports', label: 'Relatórios', icon: BarChart3 },
-    { id: 'agenda', label: 'Agenda Global', icon: CalendarIcon },
     { id: 'services', label: 'Serviços', icon: Scissors },
     { id: 'barbers', label: 'Profissionais', icon: Users },
     { id: 'gallery', label: 'Galeria', icon: Camera },

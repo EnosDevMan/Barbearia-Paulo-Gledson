@@ -5,6 +5,7 @@ import { getErrorMessage } from '../../../utils/errors';
 import { parseBRNumber } from '../../../utils/validation';
 import { DailyWorkingHours } from '../../../types';
 import { resolveDailyHours } from '../../../utils/scheduling';
+import { ScheduleBlockForm } from './agenda/ScheduleBlockForm';
 
 interface AdminSettingsTabProps {
   showFeedback: (msg: string, isError: boolean) => void;
@@ -234,6 +235,13 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
                 />
               </div>
             </div>
+          </div>
+        </FormSection>
+
+        <FormSection id="blocks" title="🚫 Intervalos, Bloqueios e Feriados" expandedSection={expandedSection} setExpandedSection={setExpandedSection}>
+          <div>
+            <p className="text-sm text-slate-500 mb-5">Centralize indisponibilidades da barbearia e dos profissionais sem ocupar a agenda de consultas.</p>
+            <ScheduleBlockForm showFeedback={showFeedback} />
           </div>
         </FormSection>
 

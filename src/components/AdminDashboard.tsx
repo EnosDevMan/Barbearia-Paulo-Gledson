@@ -12,6 +12,7 @@ import { AdminGalleryTab } from '../features/admin/components/AdminGalleryTab';
 import { AdminClientsTab } from '../features/admin/components/AdminClientsTab';
 import { AdminAgendaTab } from '../features/admin/components/AdminAgendaTab';
 import { AdminSettingsTab } from '../features/admin/components/AdminSettingsTab';
+import { AdminBookingForm } from '../features/admin/components/agenda/AdminBookingForm';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -161,20 +162,20 @@ const AdminDashboardInner: React.FC<AdminDashboardProps> = ({ onLogout, onNaviga
 
         {/* Main Content - MUITO mais espaçado */}
         <main className="flex-1 overflow-y-auto">
-          <div className="p-6 sm:p-8 lg:p-10">
+          <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
               {/* Título da Página */}
-              <div className="mb-10">
+              <div className="mb-6">
                 <h2 className="text-3xl md:text-4xl font-black text-slate-900">
                   {navItems.find(item => item.id === activeTab)?.label}
                 </h2>
                 <div className="h-1.5 w-16 bg-gradient-to-r from-indigo-600 to-indigo-400 rounded-full mt-3" />
-                <p className="text-slate-600 text-sm mt-3">Gerencie todos os aspectos do seu negócio</p>
+                <p className="text-slate-600 text-sm mt-3">{activeTab === 'overview' ? 'Sua operação de hoje, em um só lugar' : 'Encontre e conclua sua tarefa com rapidez'}</p>
               </div>
 
               {/* Content Container - com background e padding generoso */}
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
-                <div className="p-4 sm:p-8 md:p-12">
+                <div className="p-4 sm:p-6 md:p-8">
                   {activeTab === 'overview' && (
                     <AdminOverviewTab 
                       formatBRL={formatBRL}
@@ -182,7 +183,20 @@ const AdminDashboardInner: React.FC<AdminDashboardProps> = ({ onLogout, onNaviga
                       getServiceName={getServiceName}
                       handleUpdateBookingStatus={handleUpdateBookingStatus}
                       onViewFullReport={() => setActiveTab('reports')}
+                      onNewBooking={() => setActiveTab('new-booking')}
+                      onViewAgenda={() => setActiveTab('agenda')}
+                      showFeedback={showFeedback}
                     />
+                  )}
+
+                  {activeTab === 'new-booking' && (
+                    <div className="max-w-3xl mx-auto">
+                      <div className="mb-6">
+                        <h2 className="text-xl font-extrabold text-slate-900">Criar novo agendamento</h2>
+                        <p className="text-sm text-slate-500 mt-1">Escolha profissional e serviço para consultar a disponibilidade real.</p>
+                      </div>
+                      <AdminBookingForm showFeedback={showFeedback} onSuccess={() => setActiveTab('overview')} />
+                    </div>
                   )}
 
                   {activeTab === 'reports' && (
