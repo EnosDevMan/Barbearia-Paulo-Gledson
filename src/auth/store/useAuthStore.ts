@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../../lib/supabaseClient';
 import { supabaseAuthProvider } from '../services/supabaseAuthProvider';
 import { AuthUser, LoginCredentials, RegisterPayload } from '../types';
+import { getErrorMessage } from '../../utils/errors';
 
 interface AuthState {
   currentUser: AuthUser | null;
@@ -100,38 +101,53 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (credentials) => {
     set({ loading: true, error: null });
-    const result = await supabaseAuthProvider.login(credentials);
-    if (!result.success || !result.data) {
-      set({ loading: false, error: result.error || 'Falha ao entrar.' });
+    try {
+      const result = await supabaseAuthProvider.login(credentials);
+      if (!result.success || !result.data) {
+        set({ loading: false, error: result.error || 'Falha ao entrar.' });
+        return false;
+      }
+      set({ currentUser: result.data, isAuthenticated: true, loading: false, error: null });
+      return true;
+    } catch (err) {
+      set({ loading: false, error: getErrorMessage(err, 'Falha ao entrar. Tente novamente.') });
       return false;
     }
-    set({ currentUser: result.data, isAuthenticated: true, loading: false, error: null });
-    return true;
   },
 
   register: async (payload) => {
     set({ loading: true, error: null });
-    const result = await supabaseAuthProvider.register(payload);
-    if (!result.success) {
-      set({ loading: false, error: result.error || 'Falha ao criar conta.' });
+    try {
+      const result = await supabaseAuthProvider.register(payload);
+      if (!result.success) {
+        set({ loading: false, error: result.error || 'Falha ao criar conta.' });
+        return false;
+      }
+      // Se a confirmação de e-mail estiver ativa no projeto Supabase, o
+      // cadastro não gera sessão imediata — só marcamos como autenticado se
+      // existir uma sessão de verdade.
+      const session = await supabaseAuthProvider.getSession();
+      set({
+        currentUser: session ? result.data ?? null : null,
+        isAuthenticated: !!session && !!result.data,
+        loading: false,
+        error: null,
+      });
+      return session && result.data ? 'authenticated' : 'confirmation';
+    } catch (err) {
+      set({ loading: false, error: getErrorMessage(err, 'Falha ao criar conta. Tente novamente.') });
       return false;
     }
-    // Se a confirmação de e-mail estiver ativa no projeto Supabase, o
-    // cadastro não gera sessão imediata — só marcamos como autenticado se
-    // existir uma sessão de verdade.
-    const session = await supabaseAuthProvider.getSession();
-    set({
-      currentUser: session ? result.data ?? null : null,
-      isAuthenticated: !!session,
-      loading: false,
-      error: null,
-    });
-    return session ? 'authenticated' : 'confirmation';
   },
 
   logout: async () => {
-    await supabaseAuthProvider.logout();
-    set({ currentUser: null, isAuthenticated: false });
+    try {
+      await supabaseAuthProvider.logout();
+    } finally {
+      // A sessão visual nunca deve permanecer ativa quando o usuário pediu
+      // para sair, mesmo se a revogação remota falhar por falta de rede.
+      set({ currentUser: null, isAuthenticated: false, loading: false, error: null });
+    }
   },
 
   completePasswordRecovery: () => set({ passwordRecoveryMode: false }),

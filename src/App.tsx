@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from './store/useApp';
 import { AppDataLoader } from './store/AppDataLoader';
 import { Navbar } from './components/Navbar';
@@ -27,6 +27,13 @@ function BarbeariaApp() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState('');
   const { loading, loadError, currentUser, passwordRecoveryMode, completePasswordRecovery, logout } = useApp();
+
+  useEffect(() => {
+    const protectedView = currentView === 'customer' || currentView === 'barber' || currentView === 'admin';
+    if (!loading && !currentUser && protectedView) {
+      setCurrentView('landing');
+    }
+  }, [currentUser, currentView, loading]);
 
   if (loading) {
     return <LoadingScreen />;
