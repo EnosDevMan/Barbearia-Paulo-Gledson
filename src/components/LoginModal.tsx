@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, LogIn, UserPlus, KeyRound, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../auth/hooks/useAuth';
+import { supabaseAuthProvider } from '../auth/services/supabaseAuthProvider';
+import { getErrorMessage } from '../utils/errors';
 import { validateEmail, validatePhoneBR } from '../utils/validation';
 
 interface LoginModalProps {
@@ -26,6 +28,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onOpenP
   const [resetSent, setResetSent] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(false);
   const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -47,6 +50,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onOpenP
     setResetSent(false);
     setPendingConfirmation(false);
     setPrivacyConsent(false);
+    setSendingReset(false);
   };
 
   const switchMode = (next: Mode) => {
@@ -69,13 +73,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onOpenP
         setLocalError('Informe um e-mail válido.');
         return;
       }
-      const { supabaseAuthProvider } = await import('../auth/services/supabaseAuthProvider');
-      const result = await supabaseAuthProvider.sendPasswordResetEmail(email);
-      if (!result.success) {
-        setLocalError(result.error || 'Não foi possível enviar o e-mail de recuperação.');
-        return;
+      setSendingReset(true);
+      try {
+        const result = await supabaseAuthProvider.sendPasswordResetEmail(email);
+        if (!result.success) {
+          setLocalError(result.error || 'Não foi possível enviar o e-mail de recuperação.');
+          return;
+        }
+        setResetSent(true);
+      } catch (err) {
+        setLocalError(getErrorMessage(err, 'Não foi possível enviar o e-mail de recuperação.'));
+      } finally {
+        setSendingReset(false);
       }
-      setResetSent(true);
       return;
     }
 
@@ -304,13 +314,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onOpenP
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || sendingReset}
                 className="w-full h-12 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 mt-2"
               >
-                {loading && <Loader2 size={16} className="animate-spin" />}
+                {(loading || sendingReset) && <Loader2 size={16} className="animate-spin" />}
                 {mode === 'login' && (loading ? 'Entrando...' : 'Entrar')}
                 {mode === 'register' && (loading ? 'Criando conta...' : 'Criar conta')}
-                {mode === 'forgot' && (loading ? 'Enviando...' : 'Enviar link de recuperação')}
+                {mode === 'forgot' && (sendingReset ? 'Enviando...' : 'Enviar link de recuperação')}
               </button>
 
               {mode === 'forgot' && (

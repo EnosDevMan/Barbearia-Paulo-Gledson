@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Calendar as CalendarIcon, Search, CalendarPlus } from 'lucide-react';
+import { Calendar as CalendarIcon, Search } from 'lucide-react';
 import { useApp } from '../../../store/useApp';
-import { ScheduleBlockForm } from './agenda/ScheduleBlockForm';
-import { AdminBookingForm } from './agenda/AdminBookingForm';
 import { getBarbershopTodayStr } from '../../../utils/validation';
 import { getServiceName as getSharedServiceName, getBarberName as getSharedBarberName } from '../../../utils/lookups';
-import { BookingStatus } from '../../../types';
+import { Booking, BookingStatus } from '../../../types';
 import { BookingStatusActions } from '../../../components/BookingStatusActions';
 import { getErrorMessage } from '../../../utils/errors';
+import { AdminRescheduleDialog } from './agenda/AdminRescheduleDialog';
 
 interface AdminAgendaTabProps {
   showFeedback: (msg: string, isError: boolean) => void;
@@ -22,9 +21,10 @@ export const AdminAgendaTab: React.FC<AdminAgendaTabProps> = ({ showFeedback }) 
   // administrador esteja acessando de outro fuso horário.
   const [dateFilter, setDateFilter] = useState(getBarbershopTodayStr);
   const [barberFilter, setBarberFilter] = useState('all');
-  
-  // Admin Booking State
-  const [isAdminBookingOpen, setIsAdminBookingOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [period, setPeriod] = useState<'day' | 'tomorrow' | 'week' | 'month'>('day');
+  const [rescheduling, setRescheduling] = useState<Booking | null>(null);
 
   const getBarberName = (id: string) => getSharedBarberName(barbers, id);
 
@@ -51,21 +51,31 @@ export const AdminAgendaTab: React.FC<AdminAgendaTabProps> = ({ showFeedback }) 
   };
 
   const filteredBookings = bookings.filter(b => {
-    const matchDate = !dateFilter || b.date === dateFilter;
+    const start = new Date(`${dateFilter}T12:00:00`);
+    const end = new Date(start);
+    if (period === 'tomorrow') { start.setDate(start.getDate() + 1); end.setDate(end.getDate() + 1); }
+    if (period === 'week') end.setDate(end.getDate() + 6);
+    if (period === 'month') end.setMonth(end.getMonth() + 1, 0);
+    const date = new Date(`${b.date}T12:00:00`);
+    const matchDate = date >= start && date <= end;
     const matchBarber = barberFilter === 'all' || b.barberId === barberFilter;
-    return matchDate && matchBarber;
-  }).sort((a, b) => a.time.localeCompare(b.time));
+    const matchStatus = statusFilter === 'all' || b.status === statusFilter;
+    const query = search.trim().toLocaleLowerCase('pt-BR');
+    const matchSearch = !query || `${b.customerName} ${b.customerPhone} ${getServiceName(b.serviceId)}`.toLocaleLowerCase('pt-BR').includes(query);
+    return matchDate && matchBarber && matchStatus && matchSearch;
+  }).sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900">Agenda Global</h2>
+          <h2 className="text-xl font-extrabold text-slate-900">Agenda Completa</h2>
           <p className="text-sm font-medium text-slate-500 mt-1">
-            Visão geral de todos os agendamentos da barbearia
+            Consulte períodos e encontre agendamentos específicos
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          {([['day','Hoje'],['tomorrow','Amanhã'],['week','Semana'],['month','Mês']] as const).map(([value, label]) => <button key={value} onClick={() => setPeriod(value)} className={`px-3 py-2 rounded-xl text-xs font-bold ${period === value ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>{label}</button>)}
           <div className="flex-1 sm:flex-none relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input 
@@ -85,11 +95,15 @@ export const AdminAgendaTab: React.FC<AdminAgendaTabProps> = ({ showFeedback }) 
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
+          <select value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className="flex-1 sm:flex-none px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium bg-white">
+            <option value="all">Todos os status</option>
+            {['Aguardando pagamento','Confirmado','Em atendimento','Concluído','Cancelado','Não compareceu','Reagendado'].map(status => <option key={status}>{status}</option>)}
+          </select>
+          <div className="w-full relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} /><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Pesquisar cliente, telefone ou serviço" className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm" /></div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
             <h3 className="font-bold text-slate-800 flex items-center gap-2">
               <CalendarIcon size={18} className="text-indigo-600" />
@@ -117,7 +131,7 @@ export const AdminAgendaTab: React.FC<AdminAgendaTabProps> = ({ showFeedback }) 
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex flex-col items-center justify-center bg-slate-100 rounded-xl p-3 min-w-[80px]">
                       <span className="text-xl font-black text-slate-900 tracking-tight">{booking.time}</span>
-                      <span className="text-[10px] font-bold text-slate-500 uppercase">Horário</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">{new Date(`${booking.date}T12:00:00`).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</span>
                     </div>
                     
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -145,47 +159,15 @@ export const AdminAgendaTab: React.FC<AdminAgendaTabProps> = ({ showFeedback }) 
                     </div>
 
                     <div className="flex gap-2 items-center sm:items-start flex-wrap">
-                      <BookingStatusActions booking={booking} handleStatusChange={handleStatusChange} />
+                      <BookingStatusActions booking={booking} handleStatusChange={handleStatusChange} onReschedule={setRescheduling} />
                     </div>
                   </div>
                 </div>
               ))
             )}
           </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-            <button 
-              onClick={() => setIsAdminBookingOpen(!isAdminBookingOpen)}
-              className="w-full flex items-center justify-between text-left font-extrabold text-slate-900 mb-2 group cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                  <CalendarPlus size={16} />
-                </div>
-                Adicionar Agendamento
-              </div>
-              <span className="text-xl text-slate-400 group-hover:text-indigo-600 transition-colors">
-                {isAdminBookingOpen ? '-' : '+'}
-              </span>
-            </button>
-            <p className="text-xs text-slate-500 mb-4 pl-10">Crie um agendamento manualmente pelo painel.</p>
-            
-            {isAdminBookingOpen && (
-              <AdminBookingForm 
-                showFeedback={showFeedback}
-                onSuccess={() => setIsAdminBookingOpen(false)}
-              />
-            )}
-
-            <div className="border-t border-slate-100 pt-4">
-              <h4 className="font-bold text-slate-900 text-sm mb-3">Ausências e Bloqueios</h4>
-              <ScheduleBlockForm showFeedback={showFeedback} />
-            </div>
-          </div>
-        </div>
       </div>
+      {rescheduling && <AdminRescheduleDialog booking={rescheduling} onClose={() => setRescheduling(null)} showFeedback={showFeedback} />}
     </div>
   );
 };

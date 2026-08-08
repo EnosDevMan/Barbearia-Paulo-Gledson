@@ -44,6 +44,20 @@ build de produção.
 7. **Bloqueios estruturalmente inválidos.** O formulário aceitava fim anterior
    ao início, períodos invertidos e pausas fora do horário especial. A validação
    impede esses dados antes da persistência, sem mudar as regras de agenda.
+8. **Autenticação travada após falha de rede.** Login e cadastro podiam rejeitar
+   a Promise fora do fluxo esperado e deixar o estado global em carregamento
+   indefinido. As ações agora encerram o loading e mostram erro acionável em
+   qualquer falha; o cadastro só anuncia sessão autenticada quando o perfil
+   também foi carregado.
+9. **Recuperação de senha duplicada.** O formulário não possuía estado de envio,
+   permitindo vários cliques e requisições simultâneas. O botão agora fica
+   bloqueado, informa o progresso e trata também falhas inesperadas.
+10. **Tela protegida remanescente após logout.** Ao sair pelo cabeçalho, a pessoa
+   permanecia na rota interna e via uma mensagem de acesso restrito. A aplicação
+   agora retorna automaticamente ao início assim que uma sessão protegida acaba.
+11. **Divisão de bundle ineficaz.** O provedor de autenticação era importado de
+   forma estática pela store e dinâmica pelo modal, gerando aviso no build sem
+   benefício de carregamento. O modal agora usa a importação estática coerente.
 
 ## Controles existentes validados
 
@@ -79,6 +93,11 @@ build de produção.
 - `supabase/schema.sql` e a migration incremental de 08/08/2026: paridade entre
   a disponibilidade semanal do frontend e a validação obrigatória do banco.
 - `README.md`: ordem real e finalidade das migrations documentadas.
+- `src/auth/store/useAuthStore.ts`: recuperação consistente de falhas assíncronas,
+  validação conjunta de sessão/perfil e limpeza local garantida no logout.
+- `src/components/LoginModal.tsx`: envio único e resiliente da recuperação de
+  senha, com feedback visual durante a requisição.
+- `src/App.tsx`: redirecionamento seguro para o início após perda da sessão.
 
 ## Riscos e melhorias futuras
 

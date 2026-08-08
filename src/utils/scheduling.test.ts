@@ -3,27 +3,27 @@ import { generateSlotStartMinutes, getAvailability } from './scheduling';
 
 describe('generateSlotStartMinutes', () => {
   it.each([
-    { interval: 0, expected: [540, 570, 600, 630] },
-    { interval: 5, expected: [540, 575, 610] },
-    { interval: 10, expected: [540, 580, 620] },
-    { interval: 15, expected: [540, 585] },
-    { interval: 20, expected: [540, 590] },
-    { interval: 30, expected: [540, 600] },
-  ])('avança duração + $interval minutos', ({ interval, expected }) => {
+    { interval: 5, expected: [540, 545, 550, 555, 560, 565, 570, 575, 580, 585, 590, 595, 600, 605, 610, 615, 620, 625] },
+    { interval: 10, expected: [540, 550, 560, 570, 580, 590, 600, 610, 620] },
+    { interval: 15, expected: [540, 555, 570, 585, 600, 615] },
+    { interval: 20, expected: [540, 560, 580, 600] },
+    { interval: 30, expected: [540, 570, 600] },
+  ])('avança somente o intervalo de $interval minutos definido no admin', ({ interval, expected }) => {
     expect(generateSlotStartMinutes(540, 660, 30, interval)).toEqual(expected);
   });
 
   it('não oferece um horário cujo serviço e intervalo ultrapassem o fechamento', () => {
-    expect(generateSlotStartMinutes(540, 639, 30, 10)).toEqual([540, 580]);
+    expect(generateSlotStartMinutes(540, 639, 30, 10)).toEqual([540, 550, 560, 570, 580, 590]);
   });
 
-  it('suporta serviços de durações diferentes', () => {
-    expect(generateSlotStartMinutes(540, 660, 20, 10)).toEqual([540, 570, 600, 630]);
-    expect(generateSlotStartMinutes(540, 660, 45, 15)).toEqual([540, 600]);
+  it('mantém a mesma grade para serviços de durações diferentes', () => {
+    expect(generateSlotStartMinutes(540, 660, 20, 15)).toEqual([540, 555, 570, 585, 600, 615]);
+    expect(generateSlotStartMinutes(540, 660, 45, 15)).toEqual([540, 555, 570, 585, 600]);
   });
 
   it('rejeita configurações que não podem produzir horários válidos', () => {
     expect(generateSlotStartMinutes(540, 660, 0, 10)).toEqual([]);
+    expect(generateSlotStartMinutes(540, 660, 30, 0)).toEqual([]);
     expect(generateSlotStartMinutes(540, 660, 30, -1)).toEqual([]);
     expect(generateSlotStartMinutes(660, 540, 30, 10)).toEqual([]);
   });
@@ -34,7 +34,7 @@ describe('getAvailability', () => {
     barberId: 'barber-1',
     date: '2026-08-10',
     duration: 30,
-    intervalMinutes: 0,
+    intervalMinutes: 30,
     shopHours: { open: '09:00', close: '11:00', daysOpen: [1] },
     bookings: [{
       id: 'booking-1', customerId: 'customer-1', customerName: 'Cliente',
@@ -66,10 +66,9 @@ describe('getAvailability', () => {
       shopHours: { ...input.shopHours, weeklySchedule },
     });
     expect(monday.map(slot => [slot.time, slot.status])).toEqual([
-      ['10:00', 'available'],
+      ['10:00', 'break'],
       ['10:30', 'break'],
       ['11:00', 'available'],
-      ['11:30', 'available'],
     ]);
 
     expect(getAvailability({
@@ -78,5 +77,16 @@ describe('getAvailability', () => {
       bookings: [],
       shopHours: { ...input.shopHours, weeklySchedule },
     })).toEqual([]);
+  });
+
+  it('oferece candidatos na grade do admin, não na duração do serviço', () => {
+    const slots = getAvailability({
+      ...input,
+      bookings: [],
+      duration: 45,
+      intervalMinutes: 30,
+    });
+
+    expect(slots.map(slot => slot.time)).toEqual(['09:00', '09:30']);
   });
 });
