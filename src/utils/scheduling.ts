@@ -35,10 +35,14 @@ export function resolveDailyHours(hours: WorkingHours, weekday: number) {
 }
 
 export function generateSlotStartMinutes(open: number, close: number, duration: number, interval: number): number[] {
-  if (duration <= 0 || interval < 0 || close <= open) return [];
+  if (duration <= 0 || interval <= 0 || close <= open) return [];
   const length = duration + interval;
   const starts: number[] = [];
-  for (let current = open; current + length <= close; current += length) starts.push(current);
+  // The configured interval defines the appointment grid. Service duration
+  // only determines whether each candidate fits and is free; it must not move
+  // the following start time, otherwise every service exposes a different
+  // list of hours for the same professional and day.
+  for (let current = open; current + length <= close; current += interval) starts.push(current);
   return starts;
 }
 

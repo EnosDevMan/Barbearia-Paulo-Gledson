@@ -101,6 +101,12 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
     setWeeklySchedule(current => ({ ...current, [day]: { ...current[day], ...patch } }));
 
   const handleSaveConfig = async () => {
+    const intervalMinutes = Number(confInterval);
+    if (!Number.isFinite(intervalMinutes) || intervalMinutes < 1) {
+      showFeedback('O intervalo dos horários deve ser de pelo menos 1 minuto.', true);
+      return;
+    }
+
     try {
       await updateConfig({
         name: confName,
@@ -115,7 +121,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
         bookingFee: parseBRNumber(confFee),
         pixKey: confPixKey,
         toleranceMinutes: Number(confTolerance),
-        intervalMinutes: Number(confInterval),
+        intervalMinutes,
         socialLinks: {
           instagram: confInsta,
           facebook: confFb
@@ -226,9 +232,10 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Intervalo (min)</label>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Intervalo dos horários (min)</label>
                 <input 
                   type="number" 
+                  min="1"
                   value={confInterval} 
                   onChange={e => setConfInterval(e.target.value)} 
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-medium text-sm" 
