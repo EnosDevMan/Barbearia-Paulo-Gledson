@@ -3,19 +3,21 @@ import { Save, ChevronDown } from 'lucide-react';
 import { useApp } from '../../../store/useApp';
 import { getErrorMessage } from '../../../utils/errors';
 import { parseBRNumber } from '../../../utils/validation';
+import { DailyWorkingHours } from '../../../types';
+import { resolveDailyHours } from '../../../utils/scheduling';
 
 interface AdminSettingsTabProps {
   showFeedback: (msg: string, isError: boolean) => void;
 }
 
 const WEEK_DAYS = [
-  { id: 0, label: 'Dom' },
-  { id: 1, label: 'Seg' },
-  { id: 2, label: 'Ter' },
-  { id: 3, label: 'Qua' },
-  { id: 4, label: 'Qui' },
-  { id: 5, label: 'Sex' },
-  { id: 6, label: 'Sáb' },
+  { id: 1, label: 'Segunda' },
+  { id: 2, label: 'Terça' },
+  { id: 3, label: 'Quarta' },
+  { id: 4, label: 'Quinta' },
+  { id: 5, label: 'Sexta' },
+  { id: 6, label: 'Sábado' },
+  { id: 0, label: 'Domingo' },
 ];
 
 /**
@@ -77,15 +79,15 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
   const [confName, setConfName] = useState(config.name);
   const [confAddress, setConfAddress] = useState(config.address);
   const [confPhone, setConfPhone] = useState(config.phone);
-  const [confOpen, setConfOpen] = useState(config.workingHours.open);
-  const [confClose, setConfClose] = useState(config.workingHours.close);
+  const [weeklySchedule, setWeeklySchedule] = useState<Record<number, DailyWorkingHours>>(() =>
+    Object.fromEntries(WEEK_DAYS.map(day => [day.id, resolveDailyHours(config.workingHours, day.id)]))
+  );
   const [confFee, setConfFee] = useState(config.bookingFee.toString());
   const [confPixKey, setConfPixKey] = useState(config.pixKey || '');
   const [confTolerance, setConfTolerance] = useState(config.toleranceMinutes.toString());
   const [confInterval, setConfInterval] = useState(config.intervalMinutes.toString());
   const [confInsta, setConfInsta] = useState(config.socialLinks.instagram || '');
   const [confFb, setConfFb] = useState(config.socialLinks.facebook || '');
-  const [confDays, setConfDays] = useState<number[]>(config.workingHours.daysOpen);
   const [confHeroTitle, setConfHeroTitle] = useState(config.heroTitle || '');
   const [confHeroSubtitle, setConfHeroSubtitle] = useState(config.heroSubtitle || '');
   const [confHeroDescription, setConfHeroDescription] = useState(config.heroDescription || '');
@@ -94,13 +96,8 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
   // Estado para abas expansíveis (mobile)
   const [expandedSection, setExpandedSection] = useState<string | null>('basic');
 
-  const toggleDay = (day: number) => {
-    if (confDays.includes(day)) {
-      setConfDays(confDays.filter(d => d !== day));
-    } else {
-      setConfDays([...confDays, day].sort());
-    }
-  };
+  const updateDay = (day: number, patch: Partial<DailyWorkingHours>) =>
+    setWeeklySchedule(current => ({ ...current, [day]: { ...current[day], ...patch } }));
 
   const handleSaveConfig = async () => {
     try {
@@ -109,9 +106,10 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
         address: confAddress,
         phone: confPhone,
         workingHours: {
-          open: confOpen,
-          close: confClose,
-          daysOpen: confDays
+          open: weeklySchedule[1].open,
+          close: weeklySchedule[1].close,
+          daysOpen: WEEK_DAYS.filter(day => !weeklySchedule[day.id].closed).map(day => day.id).sort(),
+          weeklySchedule
         },
         bookingFee: parseBRNumber(confFee),
         pixKey: confPixKey,
@@ -195,43 +193,24 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
         <FormSection id="schedule" title="⏰ Horários e Agendamento" expandedSection={expandedSection} setExpandedSection={setExpandedSection}>
           <div className="space-y-6">
             <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Dias de Funcionamento</label>
-              <div className="grid grid-cols-7 gap-2 md:flex md:flex-wrap md:gap-2">
-                {WEEK_DAYS.map((day) => (
-                  <button
-                    key={day.id} 
-                    type="button" 
-                    onClick={() => toggleDay(day.id)}
-                    className={`flex-1 md:w-12 h-12 rounded-lg font-bold text-sm transition-all ${
-                      confDays.includes(day.id)
-                        ? 'bg-slate-900 text-white shadow-md'
-                        : 'bg-white border border-slate-200 text-slate-500 hover:border-slate-400'
-                    }`}
-                  >
-                    {day.label}
-                  </button>
-                ))}
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Agenda semanal da barbearia</label>
+                <p className="text-xs text-slate-500 mt-1">Defina o funcionamento geral; a disponibilidade individual continua configurada em cada barbeiro.</p>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Abertura</label>
-                <input 
-                  type="time" 
-                  value={confOpen} 
-                  onChange={e => setConfOpen(e.target.value)} 
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-medium text-sm bg-white" 
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Fechamento</label>
-                <input 
-                  type="time" 
-                  value={confClose} 
-                  onChange={e => setConfClose(e.target.value)} 
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-medium text-sm bg-white" 
-                />
+              <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden">
+                {WEEK_DAYS.map(day => {
+                  const hours = weeklySchedule[day.id];
+                  return <div key={day.id} className="grid grid-cols-1 sm:grid-cols-[8rem_1fr] gap-3 p-3 bg-white items-center">
+                    <label className="flex items-center gap-2 font-bold text-sm text-slate-800">
+                      <input type="checkbox" checked={!hours.closed} onChange={event => updateDay(day.id, { closed: !event.target.checked })} />
+                      {day.label}
+                    </label>
+                    {hours.closed ? <span className="text-xs font-semibold text-slate-400">Fechado</span> : <div className="grid grid-cols-2 gap-2 items-center">
+                      <input aria-label={`Abertura ${day.label}`} type="time" value={hours.open} onChange={event => updateDay(day.id, { open: event.target.value })} className="min-w-0 w-full px-3 py-2 border border-slate-200 rounded-lg text-base sm:text-sm bg-white" />
+                      <input aria-label={`Fechamento ${day.label}`} type="time" value={hours.close} onChange={event => updateDay(day.id, { close: event.target.value })} className="min-w-0 w-full px-3 py-2 border border-slate-200 rounded-lg text-base sm:text-sm bg-white" />
+                    </div>}
+                  </div>;
+                })}
               </div>
             </div>
 

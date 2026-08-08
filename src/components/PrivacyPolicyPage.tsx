@@ -61,7 +61,7 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ onBack }) 
 
         <section>
           <h2 className="text-base font-bold text-slate-900 mb-2">2. Termos de uso</h2>
-          <p>O agendamento está sujeito à disponibilidade confirmada pelo sistema. O cliente deve informar dados verdadeiros, comparecer no horário e observar a tolerância exibida. Taxas, cancelamentos e reagendamentos seguem as condições mostradas antes da confirmação. O WhatsApp é aberto somente por ação do usuário; o sistema não envia mensagens automaticamente.</p>
+          <p>O agendamento está sujeito à disponibilidade confirmada pelo sistema. O cliente deve informar dados verdadeiros, comparecer no horário e observar a tolerância exibida. Taxas, cancelamentos e reagendamentos seguem as condições mostradas antes da confirmação. Ao concluir uma reserva, o sistema pode abrir o WhatsApp com uma mensagem pronta; o envio só acontece após a confirmação do próprio usuário.</p>
         </section>
 
         <section>

@@ -3,6 +3,7 @@ import { useApp } from '../../../store/useApp';
 import { Service, Barber, Booking } from '../../../types';
 import { getBarbershopTodayStr, validatePhoneBR } from '../../../utils/validation';
 import { getErrorMessage } from '../../../utils/errors';
+import { notificationService } from '../../../services/notificationService';
 
 export const useBookingFlow = (onSuccess?: (bookingId: string) => void, initialServiceId?: string, initialBarberId?: string) => {
   const { services: allServices, barbers: allBarbers, config, currentUser, getAvailableSlots, addBooking } = useApp();
@@ -145,6 +146,7 @@ export const useBookingFlow = (onSuccess?: (bookingId: string) => void, initialS
       };
 
       const newBooking = await addBooking(bookingData);
+      void notificationService.publish({ type: 'booking.created', payload: newBooking, requestedChannels: ['whatsapp'] });
       setCompletedBooking(newBooking);
       setStep(5);
       

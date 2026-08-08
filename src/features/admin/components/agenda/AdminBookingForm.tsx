@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '../../../../store/useApp';
 import { BookingStatus } from '../../../../types';
 import { getErrorMessage } from '../../../../utils/errors';
@@ -9,7 +9,7 @@ interface AdminBookingFormProps {
 }
 
 export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({ showFeedback, onSuccess }) => {
-  const { barbers, services, isSlotAvailable, addBooking } = useApp();
+  const { barbers, services, isSlotAvailable, getAvailabilitySlots, addBooking } = useApp();
 
   const [adminCustName, setAdminCustName] = useState('');
   const [adminCustPhone, setAdminCustPhone] = useState('');
@@ -21,6 +21,11 @@ export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({ showFeedback
   const [adminFeePaid, setAdminFeePaid] = useState(true);
   const [adminStatus, setAdminStatus] = useState<BookingStatus>('Confirmado');
   const [isSaving, setIsSaving] = useState(false);
+  const selectedService = services.find(service => service.id === adminServiceId);
+  const hasAvailabilityEngine = typeof getAvailabilitySlots === 'function';
+  const slots = useMemo(() => hasAvailabilityEngine && adminBarberId && adminServiceId && adminDate
+    ? getAvailabilitySlots(adminBarberId, adminServiceId, adminDate, true)
+    : [], [hasAvailabilityEngine, adminBarberId, adminServiceId, adminDate, getAvailabilitySlots]);
 
   const handleAdminBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,23 +96,33 @@ export const AdminBookingForm: React.FC<AdminBookingFormProps> = ({ showFeedback
   return (
     <form onSubmit={handleAdminBookingSubmit} className="space-y-4 border-t border-slate-100 pt-4 mb-4 text-xs" noValidate>
       <div className="space-y-3">
-        <input type="text" required value={adminCustName} onChange={(e) => setAdminCustName(e.target.value)} placeholder="Nome do Cliente *" className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium" />
-        <input type="tel" required value={adminCustPhone} onChange={(e) => setAdminCustPhone(e.target.value)} placeholder="WhatsApp *" className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium" />
-        
+        <p className="font-bold text-slate-500 uppercase tracking-wide">1. Profissional</p>
         <select required value={adminBarberId} onChange={(e) => setAdminBarberId(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium bg-white">
           <option value="">Selecione o Profissional *</option>
           {barbers.filter(b => b.active !== false).map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
 
+        <p className="font-bold text-slate-500 uppercase tracking-wide">2. Cliente</p>
+        <input type="text" required value={adminCustName} onChange={(e) => setAdminCustName(e.target.value)} placeholder="Nome do Cliente *" className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium" />
+        <input type="tel" required value={adminCustPhone} onChange={(e) => setAdminCustPhone(e.target.value)} placeholder="WhatsApp *" className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium" />
+
+        <p className="font-bold text-slate-500 uppercase tracking-wide">3. Serviço e data</p>
         <select required value={adminServiceId} onChange={(e) => setAdminServiceId(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium bg-white">
           <option value="">Selecione o Serviço *</option>
           {services.map(s => <option key={s.id} value={s.id}>{s.name} - R$ {s.price}</option>)}
         </select>
 
-        <div className="grid grid-cols-2 gap-2">
-          <input type="date" required value={adminDate} onChange={(e) => setAdminDate(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium bg-white" />
-          <input type="time" required value={adminTime} onChange={(e) => setAdminTime(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium bg-white" />
+        <input type="date" required value={adminDate} onChange={(e) => { setAdminDate(e.target.value); setAdminTime(''); }} className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium bg-white text-base" />
+        {selectedService && <p className="text-slate-500">Duração: <strong>{selectedService.duration} min</strong></p>}
+
+        <p className="font-bold text-slate-500 uppercase tracking-wide">4. Horário</p>
+        {adminDate && slots.length === 0 && <div className="rounded-lg bg-slate-50 p-3 text-slate-500">Barbearia ou profissional fechado nesta data.</div>}
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          {slots.map(slot => <button key={slot.time} type="button" disabled={slot.status !== 'available'} title={slot.reason} onClick={() => setAdminTime(slot.time)} className={`rounded-lg border px-2 py-2 font-bold transition-colors ${adminTime === slot.time ? 'bg-indigo-600 text-white border-indigo-600' : slot.status === 'available' ? 'bg-white text-slate-800 border-slate-200 hover:border-indigo-500' : 'bg-slate-100 text-slate-400 border-slate-100 line-through cursor-not-allowed'}`}>
+            {slot.time}<span className="block text-[9px] no-underline">{slot.status === 'available' ? 'Livre' : slot.reason}</span>
+          </button>)}
         </div>
+        {!hasAvailabilityEngine && <input aria-label="Horário" type="time" required value={adminTime} onChange={event => setAdminTime(event.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white" />}
 
         <input type="text" value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} placeholder="Observações" className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 font-medium" />
         

@@ -22,6 +22,16 @@ export interface WorkingHours {
   daysOpen: number[]; // 0 = Sunday, 1 = Monday, etc.
   breakStart?: string; // HH:MM
   breakEnd?: string; // HH:MM
+  /** Per-day schedule. Optional to keep persisted legacy configurations compatible. */
+  weeklySchedule?: Partial<Record<number, DailyWorkingHours>>;
+}
+
+export interface DailyWorkingHours {
+  open: string;
+  close: string;
+  closed?: boolean;
+  breakStart?: string;
+  breakEnd?: string;
 }
 
 export interface Barber {

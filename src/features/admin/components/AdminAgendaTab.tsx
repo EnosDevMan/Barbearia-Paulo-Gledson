@@ -49,7 +49,7 @@ export const AdminAgendaTab: React.FC<AdminAgendaTabProps> = ({ showFeedback }) 
     const matchDate = !dateFilter || b.date === dateFilter;
     const matchBarber = barberFilter === 'all' || b.barberId === barberFilter;
     return matchDate && matchBarber;
-  });
+  }).sort((a, b) => a.time.localeCompare(b.time));
 
   return (
     <div className="space-y-6">
