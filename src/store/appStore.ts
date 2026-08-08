@@ -33,20 +33,20 @@ export const useAppStore = () => {
     return slots.some(slot => slot.time === time && slot.status === 'available');
   }, [dataState.barbers, dataState.bookings, dataState.scheduleBlocks, dataState.services, configState.config]);
 
-  const getAvailabilitySlots = useCallback((barberId: string, serviceId: string, date: string, includeElapsed = false) => {
+  const getAvailabilitySlots = useCallback((barberId: string, serviceId: string, date: string, includeElapsed = false, excludeBookingId?: string) => {
     const duration = serviceId.split(',').reduce((sum, id) => sum + (dataState.services.find(service => service.id === id.trim())?.duration ?? 0), 0);
     const now = getBarbershopNow();
     const unavailableBeforeMinutes = !includeElapsed && date === now.dateStr ? now.hours * 60 + now.minutes + 30 : undefined;
-    return getAvailability({ barberId, date, duration, intervalMinutes: configState.config.intervalMinutes, shopHours: configState.config.workingHours, barber: dataState.barbers.find(item => item.id === barberId), bookings: dataState.bookings, blocks: dataState.scheduleBlocks, services: dataState.services, unavailableBeforeMinutes });
+    return getAvailability({ barberId, date, duration, intervalMinutes: configState.config.intervalMinutes, shopHours: configState.config.workingHours, barber: dataState.barbers.find(item => item.id === barberId), bookings: dataState.bookings, blocks: dataState.scheduleBlocks, services: dataState.services, unavailableBeforeMinutes, excludeBookingId });
   }, [dataState.services, dataState.barbers, dataState.bookings, dataState.scheduleBlocks, configState.config]);
 
   /**
    * Calcula os horários disponíveis para um barbeiro/serviço/data.
    */
-  const getAvailableSlots = useCallback(async (barberId: string, serviceId: string, date: string): Promise<string[]> => {
+  const getAvailableSlots = useCallback(async (barberId: string, serviceId: string, date: string, excludeBookingId?: string): Promise<string[]> => {
     if (!serviceId || !barberId || !date) return [];
 
-    const slots = getAvailabilitySlots(barberId, serviceId, date);
+    const slots = getAvailabilitySlots(barberId, serviceId, date, false, excludeBookingId);
     return slots.filter(slot => slot.status === 'available').map(slot => slot.time);
   }, [getAvailabilitySlots]);
 
