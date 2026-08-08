@@ -74,7 +74,7 @@ export const AdminBarbersTab: React.FC<AdminBarbersTabProps> = ({
 
       {!showBarberForm && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {barbers.sort((a, b) => (a.order || 0) - (b.order || 0)).map((barber) => {
+          {[...barbers].sort((a, b) => (a.order || 0) - (b.order || 0)).map((barber) => {
             const linkedUser = barber.userId ? users.find(u => u.id === barber.userId) : null;
             
             return (

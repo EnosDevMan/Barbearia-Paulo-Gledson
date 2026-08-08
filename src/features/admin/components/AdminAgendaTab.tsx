@@ -7,6 +7,7 @@ import { getBarbershopTodayStr } from '../../../utils/validation';
 import { getServiceName as getSharedServiceName, getBarberName as getSharedBarberName } from '../../../utils/lookups';
 import { BookingStatus } from '../../../types';
 import { BookingStatusActions } from '../../../components/BookingStatusActions';
+import { getErrorMessage } from '../../../utils/errors';
 
 interface AdminAgendaTabProps {
   showFeedback: (msg: string, isError: boolean) => void;
@@ -29,9 +30,8 @@ export const AdminAgendaTab: React.FC<AdminAgendaTabProps> = ({ showFeedback }) 
 
   const getServiceName = (id: string) => getSharedServiceName(services, id);
 
-  const handleStatusChange = (bookingId: string, newStatus: BookingStatus) => {
+  const handleStatusChange = async (bookingId: string, newStatus: BookingStatus) => {
     if (updateBookingStatus) {
-      updateBookingStatus(bookingId, newStatus);
       const statusMessages: Record<BookingStatus, string> = {
         'Confirmado': 'Agendamento confirmado!',
         'Concluído': 'Agendamento marcado como concluído!',
@@ -41,7 +41,12 @@ export const AdminAgendaTab: React.FC<AdminAgendaTabProps> = ({ showFeedback }) 
         'Não compareceu': 'Cliente marcado como não compareceu!',
         'Reagendado': 'Agendamento reagendado!'
       };
-      showFeedback(statusMessages[newStatus] || 'Status atualizado!', false);
+      try {
+        await updateBookingStatus(bookingId, newStatus);
+        showFeedback(statusMessages[newStatus] || 'Status atualizado!', false);
+      } catch (err) {
+        showFeedback(getErrorMessage(err, 'Não foi possível atualizar o agendamento.'), true);
+      }
     }
   };
 

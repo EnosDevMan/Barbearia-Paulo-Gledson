@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../../../store/useApp';
 import { BlockType, ScheduleBlock } from '../../../../types';
 import { Ban } from 'lucide-react';
+import { getErrorMessage } from '../../../../utils/errors';
 
 interface ScheduleBlockFormProps {
   showFeedback: (msg: string, isError: boolean) => void;
@@ -38,8 +39,10 @@ export const ScheduleBlockForm: React.FC<ScheduleBlockFormProps> = ({ showFeedba
   const [specialBreakStart, setSpecialBreakStart] = useState<string>('12:00');
   const [specialBreakEnd, setSpecialBreakEnd] = useState<string>('13:00');
   const [useSpecialBreak, setUseSpecialBreak] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deletingBlockId, setDeletingBlockId] = useState<string | null>(null);
 
-  const handleSaveScheduleBlock = (e: React.FormEvent) => {
+  const handleSaveScheduleBlock = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!blockReason.trim()) {
@@ -51,6 +54,10 @@ export const ScheduleBlockForm: React.FC<ScheduleBlockFormProps> = ({ showFeedba
       showFeedback('Preencha a data e o horário de início/fim do bloqueio.', true);
       return;
     }
+    if (blockType === 'block' && blockStartTime >= blockEndTime) {
+      showFeedback('O fim do bloqueio deve ser posterior ao início.', true);
+      return;
+    }
     if (blockType === 'vacation') {
       if (vacationMode === 'single' && !blockDate) {
         showFeedback('Informe a data da folga.', true);
@@ -60,9 +67,17 @@ export const ScheduleBlockForm: React.FC<ScheduleBlockFormProps> = ({ showFeedba
         showFeedback('Informe a data de início e fim das férias.', true);
         return;
       }
+      if (vacationMode === 'range' && blockStartDate > blockEndDate) {
+        showFeedback('A data final das férias deve ser igual ou posterior à inicial.', true);
+        return;
+      }
     }
     if (blockType === 'special' && (!blockStartDate || !blockEndDate)) {
       showFeedback('Informe o período do feriado/data comemorativa.', true);
+      return;
+    }
+    if (blockType === 'special' && blockStartDate > blockEndDate) {
+      showFeedback('A data final do período deve ser igual ou posterior à inicial.', true);
       return;
     }
     if (blockType === 'special_hours') {
@@ -72,6 +87,14 @@ export const ScheduleBlockForm: React.FC<ScheduleBlockFormProps> = ({ showFeedba
       }
       if (useSpecialBreak && (!specialBreakStart || !specialBreakEnd)) {
         showFeedback('Informe o início e fim da pausa, ou desmarque a opção de pausa.', true);
+        return;
+      }
+      if (specialOpen >= specialClose) {
+        showFeedback('O fechamento deve ser posterior à abertura.', true);
+        return;
+      }
+      if (useSpecialBreak && (specialBreakStart >= specialBreakEnd || specialBreakStart < specialOpen || specialBreakEnd > specialClose)) {
+        showFeedback('A pausa deve estar integralmente dentro do horário especial.', true);
         return;
       }
     }
@@ -115,12 +138,31 @@ export const ScheduleBlockForm: React.FC<ScheduleBlockFormProps> = ({ showFeedba
       };
     }
 
-    addScheduleBlock(newBlockData as Omit<ScheduleBlock, 'id'>);
-    showFeedback('Ausência/Bloqueio salvo com sucesso!', false);
-    setBlockReason('');
-    setBlockDate('');
-    setBlockStartDate('');
-    setBlockEndDate('');
+    setIsSaving(true);
+    try {
+      await addScheduleBlock(newBlockData as Omit<ScheduleBlock, 'id'>);
+      showFeedback('Ausência/Bloqueio salvo com sucesso!', false);
+      setBlockReason('');
+      setBlockDate('');
+      setBlockStartDate('');
+      setBlockEndDate('');
+    } catch (err) {
+      showFeedback(getErrorMessage(err, 'Não foi possível salvar o bloqueio.'), true);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteScheduleBlock = async (id: string) => {
+    setDeletingBlockId(id);
+    try {
+      await deleteScheduleBlock(id);
+      showFeedback('Bloqueio removido com sucesso!', false);
+    } catch (err) {
+      showFeedback(getErrorMessage(err, 'Não foi possível remover o bloqueio.'), true);
+    } finally {
+      setDeletingBlockId(null);
+    }
   };
 
   return (
@@ -216,8 +258,8 @@ export const ScheduleBlockForm: React.FC<ScheduleBlockFormProps> = ({ showFeedba
 
         <input type="text" required value={blockReason} onChange={(e) => setBlockReason(e.target.value)} placeholder="Motivo (Ex: Férias, Médico...)" className="w-full px-3 py-2 border border-slate-200 rounded-lg" />
         
-        <button type="submit" className="w-full bg-slate-900 text-white py-2 rounded-lg font-bold hover:bg-slate-800 transition-colors">
-          Salvar Bloqueio
+        <button type="submit" disabled={isSaving} className="w-full bg-slate-900 text-white py-2 rounded-lg font-bold hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 transition-colors">
+          {isSaving ? 'Salvando...' : 'Salvar Bloqueio'}
         </button>
       </form>
 
@@ -244,7 +286,7 @@ export const ScheduleBlockForm: React.FC<ScheduleBlockFormProps> = ({ showFeedba
                           : `${new Date(sb.startDate! + "T12:00:00").toLocaleDateString("pt-BR", {day: "2-digit", month: "2-digit"})} a ${new Date(sb.endDate! + "T12:00:00").toLocaleDateString("pt-BR", {day: "2-digit", month: "2-digit"})}`)
                   )}
                 </div>
-                <button onClick={() => deleteScheduleBlock(sb.id)} className="absolute top-2 right-2 p-1 text-rose-500 bg-rose-50 rounded-md transition-opacity">
+                <button type="button" disabled={deletingBlockId === sb.id} aria-label={`Remover bloqueio ${sb.reason || ''}`} onClick={() => void handleDeleteScheduleBlock(sb.id)} className="absolute top-2 right-2 p-1 text-rose-500 bg-rose-50 rounded-md disabled:cursor-not-allowed disabled:opacity-40 transition-opacity">
                   <Ban size={12} />
                 </button>
               </div>

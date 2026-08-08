@@ -22,7 +22,9 @@ Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. O lockfile deve ser usa
 As migrations em `supabase/migrations` são somente incrementais e devem ser executadas em ordem, sem editar arquivos já aplicados:
 
 1. `202608020001_secure_guest_booking_and_profile_phone.sql`: identidade do convidado e telefone do perfil;
-2. `202608020002_gallery_order_and_query_indexes.sql`: `display_order`, índices de paginação e grants explícitos de RPC.
+2. `202608020002_gallery_order_and_query_indexes.sql`: `display_order`, índices de paginação e grants explícitos de RPC;
+3. `202608040001_avatars_barber_self_upload.sql`: upload do próprio avatar pelo profissional;
+4. `202608080001_weekly_schedule_business_validation.sql`: validação autoritativa dos horários específicos de cada dia da semana.
 
 ```bash
 supabase link --project-ref <project-ref>

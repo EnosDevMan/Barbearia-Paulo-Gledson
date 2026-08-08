@@ -343,6 +343,7 @@ declare
   v_price numeric(10,2);
   v_interval int;
   v_hours jsonb;
+  v_daily_hours jsonb;
   v_special_hours jsonb;
   v_barber_active boolean;
   v_start_mins int;
@@ -467,11 +468,19 @@ begin
     v_hours := v_special_hours;
   else
     v_weekday := extract(dow from new.date);
-    if not exists (
-      select 1 from jsonb_array_elements_text(coalesce(v_hours->'daysOpen', '[]'::jsonb)) d
-      where d::int = v_weekday
-    ) then
-      raise exception 'O profissional não trabalha nesta data.';
+    v_daily_hours := v_hours->'weeklySchedule'->(v_weekday::text);
+    if v_daily_hours is not null then
+      if coalesce((v_daily_hours->>'closed')::boolean, false) then
+        raise exception 'O profissional não trabalha nesta data.';
+      end if;
+      v_hours := v_daily_hours;
+    else
+      if not exists (
+        select 1 from jsonb_array_elements_text(coalesce(v_hours->'daysOpen', '[]'::jsonb)) d
+        where d::int = v_weekday
+      ) then
+        raise exception 'O profissional não trabalha nesta data.';
+      end if;
     end if;
   end if;
 

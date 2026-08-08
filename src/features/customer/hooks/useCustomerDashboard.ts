@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useApp } from '../../../store/useApp';
 import { Booking } from '../../../types';
 import { getErrorMessage } from '../../../utils/errors';
@@ -24,6 +24,7 @@ export const useCustomerDashboard = () => {
   const [loadingTimes, setLoadingTimes] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const slotRequestId = useRef(0);
 
   const clientBookings = currentUser ? bookings.filter(b => b.customerId === currentUser.id) : [];
 
@@ -74,21 +75,23 @@ export const useCustomerDashboard = () => {
     }
   };
 
-  const loadSlotsForReschedule = async (barberId: string, serviceId: string, date: string, currentTime: string, sameDayAsOriginal: boolean) => {
+  const loadSlotsForReschedule = async (booking: Booking, date: string) => {
+    const requestId = ++slotRequestId.current;
     setLoadingTimes(true);
+    setErrorMsg('');
     try {
-      const slots = await getAvailableSlots(barberId, serviceId, date);
-      // Inclui o horário atual do agendamento na lista, já que ele está
-      // "ocupado" pelo próprio agendamento que está sendo reagendado.
-      if (sameDayAsOriginal && !slots.includes(currentTime)) {
-        slots.push(currentTime);
-        slots.sort();
-      }
+      // Exclui o próprio agendamento do motor de disponibilidade. Apenas
+      // recolocar o horário atual não liberava outros horários que se
+      // sobrepunham a ele e divergia da validação transacional do backend.
+      const slots = await getAvailableSlots(booking.barberId, booking.serviceId, date, booking.id);
+      if (requestId !== slotRequestId.current) return;
       setAvailableTimes(slots);
-    } catch {
+    } catch (err) {
+      if (requestId !== slotRequestId.current) return;
       setAvailableTimes([]);
+      setErrorMsg(getErrorMessage(err, 'Não foi possível carregar os horários disponíveis. Tente novamente.'));
     } finally {
-      setLoadingTimes(false);
+      if (requestId === slotRequestId.current) setLoadingTimes(false);
     }
   };
 
@@ -97,13 +100,13 @@ export const useCustomerDashboard = () => {
     setNewDate(booking.date);
     setNewTime(booking.time);
     setErrorMsg('');
-    loadSlotsForReschedule(booking.barberId, booking.serviceId, booking.date, booking.time, true);
+    void loadSlotsForReschedule(booking, booking.date);
   };
 
   const handleDateChange = (date: string, booking: Booking) => {
     setNewDate(date);
     setNewTime('');
-    loadSlotsForReschedule(booking.barberId, booking.serviceId, date, booking.time, date === booking.date);
+    void loadSlotsForReschedule(booking, date);
   };
 
   const handleConfirmReschedule = async (id: string) => {
