@@ -87,6 +87,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
   const [confPixKey, setConfPixKey] = useState(config.pixKey || '');
   const [confTolerance, setConfTolerance] = useState(config.toleranceMinutes.toString());
   const [confInterval, setConfInterval] = useState(config.intervalMinutes.toString());
+  const [confBookingWindowDays, setConfBookingWindowDays] = useState(config.bookingWindowDays.toString());
   const [confInsta, setConfInsta] = useState(config.socialLinks.instagram || '');
   const [confFb, setConfFb] = useState(config.socialLinks.facebook || '');
   const [confHeroTitle, setConfHeroTitle] = useState(config.heroTitle || '');
@@ -106,12 +107,17 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
     const intervalMinutes = Number(confInterval);
     const toleranceMinutes = Number(confTolerance);
     const bookingFee = parseBRNumber(confFee);
+    const bookingWindowDays = Number(confBookingWindowDays);
     if (!confName.trim() || !confAddress.trim() || !confPhone.trim()) {
       showFeedback('Preencha nome, endereço e telefone do estabelecimento.', true);
       return;
     }
     if (!Number.isFinite(intervalMinutes) || intervalMinutes < 1) {
       showFeedback('O intervalo dos horários deve ser de pelo menos 1 minuto.', true);
+      return;
+    }
+    if (!Number.isInteger(bookingWindowDays) || bookingWindowDays < 1 || bookingWindowDays > 365) {
+      showFeedback('A janela de agendamento deve ser um número inteiro entre 1 e 365 dias.', true);
       return;
     }
     if (!Number.isFinite(toleranceMinutes) || toleranceMinutes < 0) {
@@ -147,6 +153,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
         pixKey: confPixKey,
         toleranceMinutes,
         intervalMinutes,
+        bookingWindowDays,
         socialLinks: {
           instagram: confInsta,
           facebook: confFb
@@ -249,7 +256,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Tolerância (min)</label>
                 <input 
@@ -268,6 +275,19 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
                   onChange={e => setConfInterval(e.target.value)} 
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-medium text-sm" 
                 />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Agenda aberta por (dias)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  step="1"
+                  value={confBookingWindowDays}
+                  onChange={e => setConfBookingWindowDays(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-medium text-sm"
+                />
+                <p className="text-xs text-slate-500">Inclui o dia de hoje</p>
               </div>
             </div>
           </div>

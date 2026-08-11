@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar as CalendarIcon, Clock, Loader2 } from 'lucide-react';
-import { getBarbershopTodayStr, getBarbershopMaxBookingDateStr, MAX_BOOKING_DAYS_AHEAD } from '../../../utils/validation';
+import { getBarbershopTodayStr, getBarbershopMaxBookingDateStr } from '../../../utils/validation';
 
 interface Props {
   selectedDate: string;
@@ -10,6 +10,7 @@ interface Props {
   availableTimes: string[];
   loadingTimes?: boolean;
   slotsError?: string;
+  bookingWindowDays: number;
 }
 
 export const DateTimeSelectionStep: React.FC<Props> = ({
@@ -19,7 +20,8 @@ export const DateTimeSelectionStep: React.FC<Props> = ({
   setSelectedTime,
   availableTimes,
   loadingTimes,
-  slotsError
+  slotsError,
+  bookingWindowDays
 }) => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -30,16 +32,17 @@ export const DateTimeSelectionStep: React.FC<Props> = ({
         </label>
         <div className="relative">
           <input
+            aria-label="Data do Agendamento"
             type="date"
             value={selectedDate}
             min={getBarbershopTodayStr()}
-            max={getBarbershopMaxBookingDateStr()}
+            max={getBarbershopMaxBookingDateStr(bookingWindowDays)}
             onChange={(e) => setSelectedDate(e.target.value)}
             className="w-full pl-4 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700 font-medium"
           />
         </div>
         <p className="mt-2 text-xs text-slate-400">
-          Agendamentos disponíveis para os próximos {MAX_BOOKING_DAYS_AHEAD} dias.
+          Agendamentos disponíveis para os próximos {bookingWindowDays} dias.
         </p>
       </div>
 

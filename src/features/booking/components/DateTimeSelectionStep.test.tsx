@@ -8,6 +8,7 @@ const baseProps = {
   selectedTime: '',
   setSelectedTime: () => undefined,
   availableTimes: [] as string[],
+  bookingWindowDays: 7,
 };
 
 describe('DateTimeSelectionStep', () => {
@@ -28,5 +29,12 @@ describe('DateTimeSelectionStep', () => {
 
     expect(screen.getByText('Nenhum horário disponível nesta data')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('usa e informa a janela de agendamento configurada pelo admin', () => {
+    render(<DateTimeSelectionStep {...baseProps} />);
+
+    expect(screen.getByText('Agendamentos disponíveis para os próximos 7 dias.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Data do Agendamento')).toHaveAttribute('max');
   });
 });

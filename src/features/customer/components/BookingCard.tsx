@@ -1,10 +1,11 @@
 import React from 'react';
 import { Calendar, Scissors, User, XCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { Booking } from '../../../types';
-import { getBarbershopNow } from '../../../utils/validation';
+import { getBarbershopMaxBookingDateStr, getBarbershopNow } from '../../../utils/validation';
 
 interface BookingCardProps {
   booking: Booking;
+  bookingWindowDays: number;
   getServiceName: (id: string) => string;
   getServiceDuration: (id: string) => number;
   getBarberName: (id: string) => string;
@@ -26,6 +27,7 @@ interface BookingCardProps {
 
 export const BookingCard: React.FC<BookingCardProps> = React.memo(({
   booking,
+  bookingWindowDays,
   getServiceName,
   getServiceDuration,
   getBarberName,
@@ -138,6 +140,7 @@ export const BookingCard: React.FC<BookingCardProps> = React.memo(({
               value={newDate}
               onChange={(e) => handleDateChange(e.target.value, booking)}
               min={nowDateStr}
+              max={getBarbershopMaxBookingDateStr(bookingWindowDays)}
               className="w-full px-3 py-1.5 border border-slate-250 bg-white rounded-lg text-xs font-semibold text-slate-800"
             />
             {errorMsg && <p className="text-[11px] text-red-600 font-bold">{errorMsg}</p>}

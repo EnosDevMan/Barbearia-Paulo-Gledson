@@ -126,6 +126,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({ onSuccess, onNavigateT
             availableTimes={availableTimes}
             loadingTimes={loadingTimes}
             slotsError={slotsError}
+            bookingWindowDays={config.bookingWindowDays}
           />
         )}
         

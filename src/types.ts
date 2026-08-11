@@ -99,6 +99,7 @@ export interface BarbershopConfig {
   bookingFee: number; // R$ 10,00 typical
   toleranceMinutes: number; // 15 minutes typical
   intervalMinutes: number; // 60 minutes typical
+  bookingWindowDays: number; // number of calendar days shown to customers, including today
   pixKey?: string; // PIX key for booking fee
   heroTitle?: string;
   heroSubtitle?: string;
