@@ -469,7 +469,23 @@ begin
     v_hours := v_special_hours;
   else
     v_weekday := extract(dow from new.date);
-    if not exists (
+
+    -- weeklySchedule usa as chaves JSON "0" a "6". Configurações
+    -- anteriores possuem apenas daysOpen/open/close, por isso mantemos o
+    -- fallback legado. Quando existe uma entrada diária, ela define tanto o
+    -- estado aberto/fechado quanto os horários daquele dia.
+    if v_hours->'weeklySchedule'->(v_weekday::text) is not null then
+      if coalesce(
+        (v_hours->'weeklySchedule'->(v_weekday::text)->>'closed')::boolean,
+        not exists (
+          select 1 from jsonb_array_elements_text(coalesce(v_hours->'daysOpen', '[]'::jsonb)) d
+          where d::int = v_weekday
+        )
+      ) then
+        raise exception 'O profissional não trabalha nesta data.';
+      end if;
+      v_hours := v_hours || (v_hours->'weeklySchedule'->(v_weekday::text));
+    elsif not exists (
       select 1 from jsonb_array_elements_text(coalesce(v_hours->'daysOpen', '[]'::jsonb)) d
       where d::int = v_weekday
     ) then

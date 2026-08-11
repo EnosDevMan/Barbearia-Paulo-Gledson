@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { generateSlotStartMinutes, getAvailability } from './scheduling';
+import { generateSlotStartMinutes, getAvailability, resolveDailyHours } from './scheduling';
+
+describe('resolveDailyHours', () => {
+  it('mantém daysOpen como fallback para agendas semanais antigas', () => {
+    const hours = {
+      open: '09:00', close: '18:00', daysOpen: [2],
+      weeklySchedule: { 1: { open: '10:00', close: '16:00' } },
+    };
+
+    expect(resolveDailyHours(hours, 1).closed).toBe(true);
+  });
+
+  it('herda o intervalo geral quando o dia não o repete', () => {
+    const hours = {
+      open: '09:00', close: '18:00', daysOpen: [1], breakStart: '12:00', breakEnd: '13:00',
+      weeklySchedule: { 1: { open: '10:00', close: '16:00', closed: false } },
+    };
+
+    expect(resolveDailyHours(hours, 1)).toMatchObject({ breakStart: '12:00', breakEnd: '13:00' });
+  });
+});
 
 describe('generateSlotStartMinutes', () => {
   it.each([
