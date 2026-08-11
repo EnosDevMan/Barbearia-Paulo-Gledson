@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { timeToMinutes, minutesToTime, formatBRL, validateEmail, validatePhoneBR, summarizeWorkingDays, getWeekdayFromISODate } from './validation';
+import { timeToMinutes, minutesToTime, formatBRL, validateEmail, validatePhoneBR, summarizeWorkingDays, summarizeWeeklySchedule, getWeekdayFromISODate } from './validation';
 
 describe('Validation Utils', () => {
   it('should correctly convert time to minutes', () => {
@@ -97,6 +97,20 @@ describe('summarizeWorkingDays', () => {
       { label: 'Segunda', value: '09:00 - 17:00' },
       { label: 'Quinta a Sexta', value: '09:00 - 17:00' },
       { label: 'Domingo, Terça, Quarta, Sábado', value: 'Fechado' },
+    ]);
+  });
+});
+
+describe('summarizeWeeklySchedule', () => {
+  it('agrupa o expediente igual de terça a sábado para exibição na home', () => {
+    const weeklySchedule = Object.fromEntries(Array.from({ length: 7 }, (_, day) => [day, {
+      open: '08:00', close: '18:00', closed: day === 0 || day === 1,
+    }]));
+
+    expect(summarizeWeeklySchedule({ open: '08:00', close: '18:00', daysOpen: [2, 3, 4, 5, 6], weeklySchedule })).toEqual([
+      { label: 'Segunda', value: 'Fechado' },
+      { label: 'Terça a Sábado', value: '08:00 - 18:00' },
+      { label: 'Domingo', value: 'Fechado' },
     ]);
   });
 });

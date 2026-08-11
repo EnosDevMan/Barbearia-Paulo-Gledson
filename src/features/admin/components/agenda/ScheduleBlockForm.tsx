@@ -74,6 +74,14 @@ export const ScheduleBlockForm: React.FC<ScheduleBlockFormProps> = ({ showFeedba
         showFeedback('Informe o início e fim da pausa, ou desmarque a opção de pausa.', true);
         return;
       }
+      if (specialOpen >= specialClose) {
+        showFeedback('A abertura especial precisa ser anterior ao fechamento.', true);
+        return;
+      }
+      if (useSpecialBreak && (specialBreakStart >= specialBreakEnd || specialBreakStart < specialOpen || specialBreakEnd > specialClose)) {
+        showFeedback('A pausa precisa estar dentro do horário especial e terminar depois de começar.', true);
+        return;
+      }
     }
 
     const newBlockData: Partial<ScheduleBlock> = {

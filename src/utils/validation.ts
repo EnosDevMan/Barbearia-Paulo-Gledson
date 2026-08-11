@@ -183,9 +183,26 @@ export const summarizeWorkingDays = (
 /** Produces the public company schedule, including distinct hours per day. */
 export const summarizeWeeklySchedule = (hours: import('../types').WorkingHours): { label: string; value: string }[] => {
   if (!hours.weeklySchedule) return summarizeWorkingDays(hours.daysOpen, hours.open, hours.close);
-  return WEEKDAY_LABELS.map((label, day) => {
+  // Exibe na ordem habitual brasileira (segunda a domingo) e agrupa dias
+  // consecutivos com o mesmo expediente. Além de ficar mais legível na home,
+  // isto evita a impressão de que apenas o primeiro dia mostrado está aberto.
+  const days = [1, 2, 3, 4, 5, 6, 0].map(day => {
     const current = hours.weeklySchedule?.[day];
     const closed = current?.closed ?? !hours.daysOpen.includes(day);
-    return { label, value: closed ? 'Fechado' : `${current?.open ?? hours.open} - ${current?.close ?? hours.close}` };
+    return { day, value: closed ? 'Fechado' : `${current?.open ?? hours.open} - ${current?.close ?? hours.close}` };
   });
+
+  const result: { label: string; value: string }[] = [];
+  for (let start = 0; start < days.length;) {
+    let end = start;
+    while (end + 1 < days.length && days[end + 1].value === days[start].value) end++;
+    result.push({
+      label: start === end
+        ? WEEKDAY_LABELS[days[start].day]
+        : `${WEEKDAY_LABELS[days[start].day]} a ${WEEKDAY_LABELS[days[end].day]}`,
+      value: days[start].value,
+    });
+    start = end + 1;
+  }
+  return result;
 };

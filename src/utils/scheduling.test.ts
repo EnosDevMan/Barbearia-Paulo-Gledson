@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { generateSlotStartMinutes, getAvailability } from './scheduling';
+import { generateSlotStartMinutes, getAvailability, resolveDailyHours } from './scheduling';
+
+describe('resolveDailyHours', () => {
+  it('mantém daysOpen como fallback para agendas semanais antigas', () => {
+    const hours = {
+      open: '09:00', close: '18:00', daysOpen: [2],
+      weeklySchedule: { 1: { open: '10:00', close: '16:00' } },
+    };
+
+    expect(resolveDailyHours(hours, 1).closed).toBe(true);
+  });
+
+  it('herda o intervalo geral quando o dia não o repete', () => {
+    const hours = {
+      open: '09:00', close: '18:00', daysOpen: [1], breakStart: '12:00', breakEnd: '13:00',
+      weeklySchedule: { 1: { open: '10:00', close: '16:00', closed: false } },
+    };
+
+    expect(resolveDailyHours(hours, 1)).toMatchObject({ breakStart: '12:00', breakEnd: '13:00' });
+  });
+});
 
 describe('generateSlotStartMinutes', () => {
   it.each([
@@ -63,5 +83,19 @@ describe('getAvailability', () => {
     });
 
     expect(slots.map(slot => slot.time)).toEqual(['09:00', '09:30']);
+  });
+
+  it('prioriza a abertura especial do barbeiro sobre a abertura geral', () => {
+    const slots = getAvailability({
+      ...input,
+      date: '2026-08-09', // domingo, normalmente fechado
+      bookings: [],
+      blocks: [
+        { id: 'global', barberId: 'all', type: 'special', date: '2026-08-09', specialHours: { open: '09:00', close: '12:00' } },
+        { id: 'barber', barberId: 'barber-1', type: 'special', date: '2026-08-09', specialHours: { open: '14:00', close: '17:00' } },
+      ],
+    });
+
+    expect(slots.map(slot => slot.time)).toEqual(['14:00', '14:30', '15:00', '15:30', '16:00']);
   });
 });

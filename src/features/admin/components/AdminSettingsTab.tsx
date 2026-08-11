@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Save, ChevronDown } from 'lucide-react';
 import { useApp } from '../../../store/useApp';
 import { getErrorMessage } from '../../../utils/errors';
@@ -96,6 +96,15 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
   const [confAboutText, setConfAboutText] = useState(config.aboutText || '');
   const [isSaving, setIsSaving] = useState(false);
 
+  // A configuração chega de forma assíncrona. Sem esta sincronização, abrir
+  // esta aba durante o carregamento mantinha os dias do placeholder e salvar
+  // qualquer outro campo podia sobrescrever a agenda semanal real.
+  useEffect(() => {
+    setWeeklySchedule(Object.fromEntries(
+      WEEK_DAYS.map(day => [day.id, resolveDailyHours(config.workingHours, day.id)])
+    ));
+  }, [config.workingHours]);
+
   // Estado para abas expansíveis (mobile)
   const [expandedSection, setExpandedSection] = useState<string | null>('basic');
 
@@ -139,13 +148,17 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ showFeedback
 
     try {
       setIsSaving(true);
+      const firstOpenDay = WEEK_DAYS.find(day => !weeklySchedule[day.id].closed);
+      const legacyHours = firstOpenDay ? weeklySchedule[firstOpenDay.id] : weeklySchedule[1];
       await updateConfig({
         name: confName.trim(),
         address: confAddress.trim(),
         phone: confPhone.trim(),
         workingHours: {
-          open: weeklySchedule[1].open,
-          close: weeklySchedule[1].close,
+          // Mantém o formato legado coerente mesmo quando segunda está
+          // fechada; integrações antigas ainda consultam estes dois campos.
+          open: legacyHours.open,
+          close: legacyHours.close,
           daysOpen: WEEK_DAYS.filter(day => !weeklySchedule[day.id].closed).map(day => day.id).sort(),
           weeklySchedule
         },

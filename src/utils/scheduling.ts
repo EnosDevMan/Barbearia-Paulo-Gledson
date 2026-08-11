@@ -28,9 +28,19 @@ const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number) =>
   aStart < bEnd && aEnd > bStart;
 
 /** Resolves a weekday without discarding the legacy open/close/daysOpen format. */
-export function resolveDailyHours(hours: WorkingHours, weekday: number) {
+export function resolveDailyHours(hours: WorkingHours, weekday: number): Required<Pick<import('../types').DailyWorkingHours, 'open' | 'close' | 'closed'>> & import('../types').DailyWorkingHours {
   const configured = hours.weeklySchedule?.[weekday];
-  if (configured) return configured;
+  if (configured) {
+    return {
+      open: configured.open || hours.open,
+      close: configured.close || hours.close,
+      // Configurações antigas podem ter o objeto diário sem `closed`.
+      // Nesse caso, daysOpen continua sendo a fonte de verdade.
+      closed: configured.closed ?? !hours.daysOpen.includes(weekday),
+      breakStart: configured.breakStart ?? hours.breakStart,
+      breakEnd: configured.breakEnd ?? hours.breakEnd,
+    };
+  }
   return { open: hours.open, close: hours.close, closed: !hours.daysOpen.includes(weekday), breakStart: hours.breakStart, breakEnd: hours.breakEnd };
 }
 
@@ -60,7 +70,12 @@ export function getAvailability(input: AvailabilityInput): AvailabilitySlot[] {
 
   const baseHours = input.barber?.workingHours ?? input.shopHours;
   const daily = resolveDailyHours(baseHours, weekday);
-  const special = input.blocks.find(block => block.type === 'special' && block.date === input.date && block.specialHours && (block.barberId === 'all' || block.barberId === input.barberId));
+  // Uma regra do profissional tem precedência sobre a regra geral do salão,
+  // igual à validação do banco. A ordem recebida da API não pode decidir qual
+  // horário será usado.
+  const special = input.blocks
+    .filter(block => block.type === 'special' && block.date === input.date && block.specialHours && (block.barberId === 'all' || block.barberId === input.barberId))
+    .sort((a, b) => Number(b.barberId === input.barberId) - Number(a.barberId === input.barberId))[0];
   const hours = special?.specialHours ?? daily;
   if (!special && daily.closed) return [];
 
