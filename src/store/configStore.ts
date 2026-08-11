@@ -24,6 +24,7 @@ const PLACEHOLDER_CONFIG: BarbershopConfig = {
   bookingFee: 0,
   toleranceMinutes: 15,
   intervalMinutes: 30,
+  bookingWindowDays: 3,
 };
 
 export const useConfigStore = create<ConfigState>((set, get) => ({

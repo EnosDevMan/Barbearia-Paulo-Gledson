@@ -100,6 +100,7 @@ type ConfigRow = {
   booking_fee: number | string;
   tolerance_minutes: number;
   interval_minutes: number;
+  booking_window_days: number;
   pix_key?: string;
   hero_title?: string;
   hero_subtitle?: string;
@@ -209,6 +210,7 @@ function mapConfig(row: ConfigRow): BarbershopConfig {
     bookingFee: Number(row.booking_fee),
     toleranceMinutes: row.tolerance_minutes,
     intervalMinutes: row.interval_minutes,
+    bookingWindowDays: row.booking_window_days ?? 3,
     pixKey: row.pix_key ?? undefined,
     heroTitle: row.hero_title ?? undefined,
     heroSubtitle: row.hero_subtitle ?? undefined,
@@ -297,6 +299,7 @@ export const dataService = {
         booking_fee: updated.bookingFee,
         tolerance_minutes: updated.toleranceMinutes,
         interval_minutes: updated.intervalMinutes,
+        booking_window_days: updated.bookingWindowDays,
         pix_key: updated.pixKey,
         hero_title: updated.heroTitle,
         hero_subtitle: updated.heroSubtitle,

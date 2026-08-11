@@ -117,24 +117,16 @@ export const getWeekdayFromISODate = (date: string): number | null => {
 };
 
 /**
- * Quantidade máxima de dias que o cliente pode ver/escolher no agendamento,
- * contando o dia de hoje (ex: 3 = hoje, amanhã e depois de amanhã). Limita
- * a janela de datas exibida no seletor para não confundir o cliente com
- * opções muito distantes. Não afeta o agendamento feito pelo admin/barbeiro.
- */
-export const MAX_BOOKING_DAYS_AHEAD = 3;
-
-/**
  * Retorna a última data (YYYY-MM-DD) que o cliente pode selecionar no
- * agendamento, respeitando MAX_BOOKING_DAYS_AHEAD dias a partir de hoje
- * (incluindo hoje), no fuso horário da barbearia.
+ * agendamento, respeitando a quantidade configurada pelo administrador.
  */
-export const getBarbershopMaxBookingDateStr = (): string => {
+export const getBarbershopMaxBookingDateStr = (bookingWindowDays: number): string => {
   const { dateStr } = getBarbershopNow();
   const [y, m, d] = dateStr.split('-').map(Number);
   // Usa Date.UTC para somar dias sem risco de bugs de fuso/horário de verão.
   const max = new Date(Date.UTC(y, m - 1, d));
-  max.setUTCDate(max.getUTCDate() + (MAX_BOOKING_DAYS_AHEAD - 1));
+  const safeWindow = Number.isInteger(bookingWindowDays) && bookingWindowDays > 0 ? bookingWindowDays : 1;
+  max.setUTCDate(max.getUTCDate() + (safeWindow - 1));
   const yyyy = max.getUTCFullYear();
   const mm = String(max.getUTCMonth() + 1).padStart(2, '0');
   const dd = String(max.getUTCDate()).padStart(2, '0');

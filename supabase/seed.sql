@@ -14,6 +14,7 @@ update barbershop_config set
   booking_fee = 10.0,
   tolerance_minutes = 15,
   interval_minutes = 30,
+  booking_window_days = 3,
   pix_key = '11999999999',
   hero_title = 'PAULO GLEDSON',
   hero_subtitle = 'Tradição e Estilo em Sua Cidade',

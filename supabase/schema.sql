@@ -108,6 +108,7 @@ create table barbershop_config (
   booking_fee numeric(10,2) not null default 0,
   tolerance_minutes int not null default 15,
   interval_minutes int not null default 30,
+  booking_window_days int not null default 3 check (booking_window_days between 1 and 365),
   pix_key text,
   hero_title text,
   hero_subtitle text,
@@ -342,6 +343,7 @@ declare
   v_duration int;
   v_price numeric(10,2);
   v_interval int;
+  v_booking_window_days int;
   v_hours jsonb;
   v_special_hours jsonb;
   v_barber_active boolean;
@@ -434,8 +436,8 @@ begin
   -- O preço exibido pelo navegador nunca é fonte de verdade.
   new.value := v_price;
 
-  select b.active, coalesce(b.working_hours, c.working_hours), c.interval_minutes
-    into v_barber_active, v_hours, v_interval
+  select b.active, coalesce(b.working_hours, c.working_hours), c.interval_minutes, c.booking_window_days
+    into v_barber_active, v_hours, v_interval, v_booking_window_days
   from barbers b cross join barbershop_config c
   where b.id = new.barber_id and c.id = true;
 
@@ -444,7 +446,7 @@ begin
   end if;
 
   if v_actor_role is distinct from 'admin' then
-    if new.date < v_today or new.date > v_today + 2 then
+    if new.date < v_today or new.date > v_today + (v_booking_window_days - 1) then
       raise exception 'A data deve estar dentro da janela pública de agendamento.';
     end if;
     v_start_mins := extract(hour from new.time) * 60 + extract(minute from new.time);

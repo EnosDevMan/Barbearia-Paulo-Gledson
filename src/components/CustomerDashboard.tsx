@@ -7,6 +7,7 @@ import { CustomerHistoryTable } from '../features/customer/components/CustomerHi
 export const CustomerDashboard: React.FC = () => {
   const {
     currentUser,
+    config,
     upcomingBookings,
     pastBookings,
     reschedulingBookingId,
@@ -91,6 +92,7 @@ export const CustomerDashboard: React.FC = () => {
               <BookingCard
                 key={booking.id}
                 booking={booking}
+                bookingWindowDays={config.bookingWindowDays}
                 getServiceName={getServiceName}
                 getServiceDuration={getServiceDuration}
                 getBarberName={getBarberName}
