@@ -1,14 +1,22 @@
 import React from 'react';
 import { Scissors, Instagram, Facebook, MapPin, Phone, WalletCards } from 'lucide-react';
-import { BarbershopConfig } from '../../../types';
-import { summarizeWeeklySchedule } from '../../../utils/validation';
+import { Barber, BarbershopConfig, ScheduleBlock } from '../../../types';
+import { getBarbershopTodayStr, summarizeWeeklySchedule } from '../../../utils/validation';
 
 interface FooterSectionProps {
   config: BarbershopConfig;
+  barbers: Barber[];
+  scheduleBlocks: ScheduleBlock[];
   onOpenPrivacy: () => void;
 }
 
-export const FooterSection: React.FC<FooterSectionProps> = ({ config, onOpenPrivacy }) => {
+export const FooterSection: React.FC<FooterSectionProps> = ({ config, barbers, scheduleBlocks, onOpenPrivacy }) => {
+  const today = getBarbershopTodayStr();
+  const activeBarberIds = new Set(barbers.map(barber => barber.id));
+  const specialOpenings = scheduleBlocks
+    .filter(block => block.type === 'special' && block.specialHours && block.date && block.date >= today && (block.barberId === 'all' || activeBarberIds.has(block.barberId)))
+    .sort((a, b) => a.date!.localeCompare(b.date!))
+    .slice(0, 4);
   return (
     <footer className="bg-brand-navy text-slate-400 py-20 px-4 border-t border-white/10">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -60,6 +68,16 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ config, onOpenPriv
               </li>
             ))}
           </ul>
+          {specialOpenings.length > 0 && <div className="border-l-2 border-brand-copper pl-3">
+            <p className="mb-2 text-[10px] font-extrabold uppercase tracking-widest text-brand-copper">Próximos horários especiais</p>
+            <ul className="space-y-2 text-xs text-slate-300">
+              {specialOpenings.map(block => {
+                const professional = block.barberId === 'all' ? 'Todos os profissionais' : barbers.find(barber => barber.id === block.barberId)?.name;
+                const date = new Date(`${block.date}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                return <li key={block.id}><strong className="text-white">{date}</strong> · {block.specialHours!.open} - {block.specialHours!.close}{professional ? ` · ${professional}` : ''}</li>;
+              })}
+            </ul>
+          </div>}
         </div>
 
         {/* Column 3 - Contact Info */}

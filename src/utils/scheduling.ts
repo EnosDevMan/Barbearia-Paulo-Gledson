@@ -70,7 +70,12 @@ export function getAvailability(input: AvailabilityInput): AvailabilitySlot[] {
 
   const baseHours = input.barber?.workingHours ?? input.shopHours;
   const daily = resolveDailyHours(baseHours, weekday);
-  const special = input.blocks.find(block => block.type === 'special' && block.date === input.date && block.specialHours && (block.barberId === 'all' || block.barberId === input.barberId));
+  // Uma regra do profissional tem precedência sobre a regra geral do salão,
+  // igual à validação do banco. A ordem recebida da API não pode decidir qual
+  // horário será usado.
+  const special = input.blocks
+    .filter(block => block.type === 'special' && block.date === input.date && block.specialHours && (block.barberId === 'all' || block.barberId === input.barberId))
+    .sort((a, b) => Number(b.barberId === input.barberId) - Number(a.barberId === input.barberId))[0];
   const hours = special?.specialHours ?? daily;
   if (!special && daily.closed) return [];
 
