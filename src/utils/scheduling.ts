@@ -68,24 +68,30 @@ export function getAvailability(input: AvailabilityInput): AvailabilitySlot[] {
   const weekday = getWeekdayFromISODate(input.date);
   if (weekday === null || input.duration <= 0) return [];
 
-  const baseHours = input.barber?.workingHours ?? input.shopHours;
-  const daily = resolveDailyHours(baseHours, weekday);
-  // Uma regra do profissional tem precedência sobre a regra geral do salão,
-  // igual à validação do banco. A ordem recebida da API não pode decidir qual
-  // horário será usado.
-  const special = input.blocks
+  const shopDaily = resolveDailyHours(input.shopHours, weekday);
+  const barberDaily = resolveDailyHours(input.barber?.workingHours ?? input.shopHours, weekday);
+  const specials = input.blocks
     .filter(block => block.type === 'special' && block.date === input.date && block.specialHours && (block.barberId === 'all' || block.barberId === input.barberId))
-    .sort((a, b) => Number(b.barberId === input.barberId) - Number(a.barberId === input.barberId))[0];
-  const hours = special?.specialHours ?? daily;
-  if (!special && daily.closed) return [];
+  const shopSpecial = specials.find(block => block.barberId === 'all')?.specialHours;
+  const barberSpecial = specials.find(block => block.barberId === input.barberId)?.specialHours;
+  const shopHours = shopSpecial ?? shopDaily;
+  const barberHours = barberSpecial ?? barberDaily;
 
-  const open = timeToMinutes(hours.open);
-  const close = timeToMinutes(hours.close);
+  // O salão sempre delimita a janela máxima de atendimento. A agenda do
+  // profissional (inclusive um horário especial individual) pode restringir
+  // essa janela, mas nunca abrir antes ou fechar depois da barbearia.
+  if ((!shopSpecial && shopDaily.closed) || (!barberSpecial && barberDaily.closed)) return [];
+
+  const open = Math.max(timeToMinutes(shopHours.open), timeToMinutes(barberHours.open));
+  const close = Math.min(timeToMinutes(shopHours.close), timeToMinutes(barberHours.close));
+
   return generateSlotStartMinutes(open, close, input.duration, input.intervalMinutes).map(start => {
     const time = minutesToTime(start);
     const end = start + input.duration + input.intervalMinutes;
     if (input.unavailableBeforeMinutes !== undefined && start <= input.unavailableBeforeMinutes) return { time, status: 'closed', reason: 'Horário encerrado' };
-    if (hours.breakStart && hours.breakEnd && overlaps(start, end, timeToMinutes(hours.breakStart), timeToMinutes(hours.breakEnd))) return { time, status: 'break', reason: 'Intervalo' };
+    const duringShopBreak = shopHours.breakStart && shopHours.breakEnd && overlaps(start, end, timeToMinutes(shopHours.breakStart), timeToMinutes(shopHours.breakEnd));
+    const duringBarberBreak = barberHours.breakStart && barberHours.breakEnd && overlaps(start, end, timeToMinutes(barberHours.breakStart), timeToMinutes(barberHours.breakEnd));
+    if (duringShopBreak || duringBarberBreak) return { time, status: 'break', reason: 'Intervalo' };
 
     const block = input.blocks.find(item => {
       if (item.barberId !== 'all' && item.barberId !== input.barberId) return false;
