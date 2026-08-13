@@ -8,6 +8,7 @@ import { BarberScheduleTimeline } from '../features/barber/components/BarberSche
 import { BarberUpcomingSchedule } from '../features/barber/components/BarberUpcomingSchedule';
 import { BarberStats } from '../features/barber/components/BarberStats';
 import { BarberHistory } from '../features/barber/components/BarberHistory';
+import { BarberScheduleBlocks } from '../features/barber/components/BarberScheduleBlocks';
 
 const BarberDashboardInner: React.FC = () => {
   const {
@@ -37,7 +38,8 @@ const BarberDashboardInner: React.FC = () => {
     successMessage,
     setSuccessMessage,
     errorMessage,
-    setErrorMessage
+    setErrorMessage,
+    showFeedback
   } = useBarberDashboard();
 
   const [showProfileEdit, setShowProfileEdit] = useState(false);
@@ -174,6 +176,7 @@ const BarberDashboardInner: React.FC = () => {
               getWhatsAppLink={getWhatsAppLink}
               handleStatusChange={handleStatusChange}
             />
+            {activeBarberId && <BarberScheduleBlocks barberId={activeBarberId} showFeedback={showFeedback} />}
             <BarberUpcomingSchedule
               futureBookings={futureBookings}
               getServiceName={getServiceName}

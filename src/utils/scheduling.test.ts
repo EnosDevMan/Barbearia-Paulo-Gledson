@@ -85,17 +85,26 @@ describe('getAvailability', () => {
     expect(slots.map(slot => slot.time)).toEqual(['09:00', '09:30']);
   });
 
-  it('prioriza a abertura especial do barbeiro sobre a abertura geral', () => {
+  it('limita o horário especial do barbeiro ao funcionamento do salão', () => {
     const slots = getAvailability({
       ...input,
-      date: '2026-08-09', // domingo, normalmente fechado
+      date: '2026-08-09',
+      shopHours: { open: '09:00', close: '18:00', daysOpen: [0], weeklySchedule: { 0: { open: '09:00', close: '13:00', closed: false } } },
       bookings: [],
       blocks: [
-        { id: 'global', barberId: 'all', type: 'special', date: '2026-08-09', specialHours: { open: '09:00', close: '12:00' } },
-        { id: 'barber', barberId: 'barber-1', type: 'special', date: '2026-08-09', specialHours: { open: '14:00', close: '17:00' } },
+        { id: 'barber', barberId: 'barber-1', type: 'special', date: '2026-08-09', specialHours: { open: '08:00', close: '17:00' } },
       ],
     });
 
-    expect(slots.map(slot => slot.time)).toEqual(['14:00', '14:30', '15:00', '15:30', '16:00']);
+    expect(slots.map(slot => slot.time)).toEqual(['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00']);
+  });
+
+  it('não deixa um horário individual abrir um dia em que o salão está fechado', () => {
+    expect(getAvailability({
+      ...input,
+      date: '2026-08-09',
+      bookings: [],
+      blocks: [{ id: 'barber', barberId: 'barber-1', type: 'special', date: '2026-08-09', specialHours: { open: '09:00', close: '17:00' } }],
+    })).toEqual([]);
   });
 });
