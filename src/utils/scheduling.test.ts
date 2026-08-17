@@ -107,4 +107,18 @@ describe('getAvailability', () => {
       blocks: [{ id: 'barber', barberId: 'barber-1', type: 'special', date: '2026-08-09', specialHours: { open: '09:00', close: '17:00' } }],
     })).toEqual([]);
   });
+
+  it('herda a abertura especial do salão em um dia normalmente fechado', () => {
+    const slots = getAvailability({
+      ...input,
+      date: '2026-08-09',
+      bookings: [],
+      blocks: [{
+        id: 'shop', barberId: 'all', type: 'special', date: '2026-08-09',
+        specialHours: { open: '10:00', close: '12:00' },
+      }],
+    });
+
+    expect(slots.map(slot => slot.time)).toEqual(['10:00', '10:30', '11:00']);
+  });
 });

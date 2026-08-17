@@ -13,7 +13,6 @@ export const BarberScheduleBlocks: React.FC<Props> = ({ barberId, showFeedback }
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
-  const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
 
   const ownTimedBlocks = useMemo(() => scheduleBlocks
@@ -22,8 +21,8 @@ export const BarberScheduleBlocks: React.FC<Props> = ({ barberId, showFeedback }
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!date || !startTime || !endTime || !reason.trim()) {
-      showFeedback('Preencha a data, o intervalo e o motivo do bloqueio.', true);
+    if (!date || !startTime || !endTime) {
+      showFeedback('Preencha a data e o intervalo do bloqueio.', true);
       return;
     }
     if (startTime >= endTime) {
@@ -33,8 +32,9 @@ export const BarberScheduleBlocks: React.FC<Props> = ({ barberId, showFeedback }
 
     setSaving(true);
     try {
-      await addScheduleBlock({ barberId, type: 'block', date, startTime, endTime, reason: reason.trim() });
-      setReason('');
+      // Reasons are deliberately not collected: schedule_blocks is readable
+      // by the public availability flow, so personal notes would be exposed.
+      await addScheduleBlock({ barberId, type: 'block', date, startTime, endTime, reason: 'Indisponível' });
       showFeedback('Horário bloqueado na sua agenda.');
     } catch (error) {
       showFeedback(getErrorMessage(error, 'Não foi possível bloquear o horário.'), true);
@@ -62,7 +62,7 @@ export const BarberScheduleBlocks: React.FC<Props> = ({ barberId, showFeedback }
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <form onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="text-xs font-bold text-slate-600">Data
           <input aria-label="Data do bloqueio" type="date" required value={date} onChange={event => setDate(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 font-medium text-slate-900" />
         </label>
@@ -71,9 +71,6 @@ export const BarberScheduleBlocks: React.FC<Props> = ({ barberId, showFeedback }
         </label>
         <label className="text-xs font-bold text-slate-600">Fim
           <input aria-label="Fim do bloqueio" type="time" required value={endTime} onChange={event => setEndTime(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 font-medium text-slate-900" />
-        </label>
-        <label className="text-xs font-bold text-slate-600 lg:col-span-1">Motivo
-          <input aria-label="Motivo do bloqueio" type="text" required maxLength={120} value={reason} onChange={event => setReason(event.target.value)} placeholder="Ex.: consulta" className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 font-medium text-slate-900" />
         </label>
         <button disabled={saving || !barberId} className="self-end rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-extrabold text-white hover:bg-slate-800 disabled:opacity-50">
           <Ban className="mr-1.5 inline" size={14} />{saving ? 'Salvando...' : 'Bloquear'}
@@ -86,8 +83,8 @@ export const BarberScheduleBlocks: React.FC<Props> = ({ barberId, showFeedback }
           <div className="flex flex-wrap gap-2">
             {ownTimedBlocks.map(block => (
               <div key={block.id} className="flex items-center gap-2 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-slate-700">
-                <span><strong>{block.date?.split('-').reverse().join('/')}</strong> · {block.startTime}–{block.endTime} · {block.reason}</span>
-                <button type="button" aria-label={`Remover bloqueio ${block.reason}`} onClick={() => handleDelete(block.id)} className="text-rose-600 hover:text-rose-800"><Trash2 size={14} /></button>
+                <span><strong>{block.date?.split('-').reverse().join('/')}</strong> · {block.startTime}–{block.endTime}</span>
+                <button type="button" aria-label={`Remover bloqueio de ${block.startTime} a ${block.endTime}`} onClick={() => handleDelete(block.id)} className="text-rose-600 hover:text-rose-800"><Trash2 size={14} /></button>
               </div>
             ))}
           </div>

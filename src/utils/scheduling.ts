@@ -69,18 +69,22 @@ export function getAvailability(input: AvailabilityInput): AvailabilitySlot[] {
   if (weekday === null || input.duration <= 0) return [];
 
   const shopDaily = resolveDailyHours(input.shopHours, weekday);
+  const barberInheritsShopHours = !input.barber?.workingHours;
   const barberDaily = resolveDailyHours(input.barber?.workingHours ?? input.shopHours, weekday);
   const specials = input.blocks
     .filter(block => block.type === 'special' && block.date === input.date && block.specialHours && (block.barberId === 'all' || block.barberId === input.barberId))
   const shopSpecial = specials.find(block => block.barberId === 'all')?.specialHours;
   const barberSpecial = specials.find(block => block.barberId === input.barberId)?.specialHours;
   const shopHours = shopSpecial ?? shopDaily;
-  const barberHours = barberSpecial ?? barberDaily;
+  // An inherited schedule must inherit the resolved salon exception too. If
+  // we reused the regular weekday here, a shop-wide exception could not open
+  // a normally closed day for professionals without a custom schedule.
+  const barberHours = barberSpecial ?? (barberInheritsShopHours ? shopHours : barberDaily);
 
   // O salão sempre delimita a janela máxima de atendimento. A agenda do
   // profissional (inclusive um horário especial individual) pode restringir
   // essa janela, mas nunca abrir antes ou fechar depois da barbearia.
-  if ((!shopSpecial && shopDaily.closed) || (!barberSpecial && barberDaily.closed)) return [];
+  if ((!shopSpecial && shopDaily.closed) || (!barberInheritsShopHours && !barberSpecial && barberDaily.closed)) return [];
 
   const open = Math.max(timeToMinutes(shopHours.open), timeToMinutes(barberHours.open));
   const close = Math.min(timeToMinutes(shopHours.close), timeToMinutes(barberHours.close));

@@ -21,6 +21,7 @@ declare
   v_shop_special_hours jsonb;
   v_barber_special_hours jsonb;
   v_barber_active boolean;
+  v_barber_inherits_shop_hours boolean;
   v_start_mins int;
   v_end_mins int;
   v_open_mins int;
@@ -110,8 +111,8 @@ begin
   -- O preço exibido pelo navegador nunca é fonte de verdade.
   new.value := v_price;
 
-  select b.active, coalesce(b.working_hours, c.working_hours), c.working_hours, c.interval_minutes, c.booking_window_days
-    into v_barber_active, v_barber_hours, v_shop_hours, v_interval, v_booking_window_days
+  select b.active, b.working_hours is null, coalesce(b.working_hours, c.working_hours), c.working_hours, c.interval_minutes, c.booking_window_days
+    into v_barber_active, v_barber_inherits_shop_hours, v_barber_hours, v_shop_hours, v_interval, v_booking_window_days
   from barbers b cross join barbershop_config c
   where b.id = new.barber_id and c.id = true;
 
@@ -163,6 +164,10 @@ begin
 
   if v_barber_special_hours is not null then
     v_barber_hours := v_barber_special_hours;
+  elsif v_barber_inherits_shop_hours then
+    -- Inherit the already resolved shop schedule, including a shop-wide
+    -- exception that opens a weekday which is normally closed.
+    v_barber_hours := v_shop_hours;
   elsif v_barber_hours->'weeklySchedule'->(v_weekday::text) is not null then
     if coalesce(
       (v_barber_hours->'weeklySchedule'->(v_weekday::text)->>'closed')::boolean,
@@ -203,4 +208,3 @@ begin
   return new;
 end;
 $$;
-
