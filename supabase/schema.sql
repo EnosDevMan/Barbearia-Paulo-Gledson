@@ -342,7 +342,6 @@ declare
   v_service_count int;
   v_duration int;
   v_price numeric(10,2);
-  v_interval int;
   v_booking_window_days int;
   v_hours jsonb;
   v_special_hours jsonb;
@@ -436,8 +435,8 @@ begin
   -- O preço exibido pelo navegador nunca é fonte de verdade.
   new.value := v_price;
 
-  select b.active, coalesce(b.working_hours, c.working_hours), c.interval_minutes, c.booking_window_days
-    into v_barber_active, v_hours, v_interval, v_booking_window_days
+  select b.active, coalesce(b.working_hours, c.working_hours), c.booking_window_days
+    into v_barber_active, v_hours, v_booking_window_days
   from barbers b cross join barbershop_config c
   where b.id = new.barber_id and c.id = true;
 
@@ -497,7 +496,7 @@ begin
                  + split_part(v_hours->>'open', ':', 2)::int;
   v_close_mins := split_part(v_hours->>'close', ':', 1)::int * 60
                   + split_part(v_hours->>'close', ':', 2)::int;
-  v_end_mins := v_start_mins + v_duration + coalesce(v_interval, 0);
+  v_end_mins := v_start_mins + v_duration;
   if v_start_mins < v_open_mins or v_end_mins > v_close_mins then
     raise exception 'Horário fora do expediente do profissional.';
   end if;
@@ -516,8 +515,7 @@ $$;
 
 -- Last line of defence against overlapping appointments. The RPCs also do
 -- an early conflict check for a friendlier failure, but this trigger covers
--- direct writes and, importantly, applies the configured cleanup interval to
--- both the new and the existing appointment.
+-- direct writes using the service duration as the occupied interval.
 create function prevent_booking_schedule_conflicts()
 returns trigger
 language plpgsql
@@ -526,7 +524,6 @@ set search_path = public, pg_temp
 as $$
 declare
   v_duration int;
-  v_interval int;
   v_start_mins int;
   v_end_mins int;
 begin
@@ -543,14 +540,11 @@ begin
   select coalesce(sum(duration), 0) into v_duration
   from services
   where active = true and id::text = any(string_to_array(new.service_id, ','));
-  select coalesce(interval_minutes, 0) into v_interval
-  from barbershop_config where id = true;
-
   -- Invalid services are rejected by validate_booking_business_rules.
   if v_duration <= 0 then return new; end if;
 
   v_start_mins := extract(hour from new.time) * 60 + extract(minute from new.time);
-  v_end_mins := v_start_mins + v_duration + v_interval;
+  v_end_mins := v_start_mins + v_duration;
 
   if exists (
     select 1 from bookings b
@@ -560,8 +554,7 @@ begin
       and b.status <> 'Cancelado'
       and (extract(hour from b.time) * 60 + extract(minute from b.time)) < v_end_mins
       and (extract(hour from b.time) * 60 + extract(minute from b.time))
-          + coalesce((select sum(s.duration) from services s where s.id::text = any(string_to_array(b.service_id, ','))), 30)
-          + v_interval > v_start_mins
+          + coalesce((select sum(s.duration) from services s where s.id::text = any(string_to_array(b.service_id, ','))), 30) > v_start_mins
   ) then
     raise exception 'Horário indisponível: já existe um agendamento neste intervalo.';
   end if;
@@ -648,7 +641,6 @@ set search_path = public, pg_temp
 as $$
 declare
   v_duration int;
-  v_interval_minutes int;
   v_tolerance_minutes int;
   v_booking_fee numeric;
   v_initial_status booking_status;
@@ -695,7 +687,7 @@ begin
     raise exception 'Serviço inválido.';
   end if;
 
-  select interval_minutes, tolerance_minutes, booking_fee into v_interval_minutes, v_tolerance_minutes, v_booking_fee
+  select tolerance_minutes, booking_fee into v_tolerance_minutes, v_booking_fee
   from barbershop_config where id = true;
 
   -- Sem taxa de reserva configurada (R$0 ou nula), não há pagamento a
@@ -706,7 +698,7 @@ begin
   v_initial_status := case when coalesce(v_booking_fee, 0) <= 0 then 'Confirmado' else 'Aguardando pagamento' end;
 
   v_start_mins := extract(hour from p_time) * 60 + extract(minute from p_time);
-  v_end_mins := v_start_mins + v_duration + coalesce(v_interval_minutes, 0);
+  v_end_mins := v_start_mins + v_duration;
 
   -- Conflito com outros agendamentos do mesmo barbeiro/dia (não cancelados).
   select count(*) into v_conflict_count
@@ -785,7 +777,6 @@ as $$
 declare
   v_booking bookings;
   v_duration int;
-  v_interval_minutes int;
   v_start_mins int;
   v_end_mins int;
   v_conflict_count int;
@@ -820,10 +811,8 @@ begin
     v_duration := 30;
   end if;
 
-  select interval_minutes into v_interval_minutes from barbershop_config where id = true;
-
   v_start_mins := extract(hour from p_new_time) * 60 + extract(minute from p_new_time);
-  v_end_mins := v_start_mins + v_duration + coalesce(v_interval_minutes, 0);
+  v_end_mins := v_start_mins + v_duration;
 
   select count(*) into v_conflict_count
   from bookings b

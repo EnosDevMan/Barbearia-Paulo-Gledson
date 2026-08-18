@@ -48,7 +48,7 @@ export function resolveDailyHours(hours: WorkingHours, weekday: number): Require
 
 export function generateSlotStartMinutes(open: number, close: number, duration: number, interval: number): number[] {
   if (duration <= 0 || interval <= 0 || close <= open) return [];
-  const length = duration + interval;
+  const length = duration;
   const starts: number[] = [];
   // The configured interval defines the appointment grid. Service duration
   // only determines whether each candidate fits and is free; it must not move
@@ -89,7 +89,7 @@ export function getAvailability(input: AvailabilityInput): AvailabilitySlot[] {
 
   return generateSlotStartMinutes(open, close, input.duration, input.intervalMinutes).map(start => {
     const time = minutesToTime(start);
-    const end = start + input.duration + input.intervalMinutes;
+    const end = start + input.duration;
     if (input.unavailableBeforeMinutes !== undefined && start <= input.unavailableBeforeMinutes) return { time, status: 'closed', reason: 'Horário encerrado' };
     const duringShopBreak = shopHours.breakStart && shopHours.breakEnd && overlaps(start, end, timeToMinutes(shopHours.breakStart), timeToMinutes(shopHours.breakEnd));
     const duringBarberBreak = barberHours.breakStart && barberHours.breakEnd && overlaps(start, end, timeToMinutes(barberHours.breakStart), timeToMinutes(barberHours.breakEnd));
@@ -108,11 +108,11 @@ export function getAvailability(input: AvailabilityInput): AvailabilitySlot[] {
     const occupied = input.bookings.some(booking => {
       if (booking.id === input.excludeBookingId || booking.status === 'Cancelado' || booking.barberId !== input.barberId || booking.date !== input.date) return false;
       const bookedStart = timeToMinutes(booking.time);
-      return overlaps(start, end, bookedStart, bookedStart + bookingDuration(booking, input.services) + input.intervalMinutes);
+      return overlaps(start, end, bookedStart, bookedStart + bookingDuration(booking, input.services));
     }) || (input.additionalOccupiedIntervals ?? []).some(interval => {
       const bookedStart = timeToMinutes(interval.time);
       return interval.duration > 0
-        && overlaps(start, end, bookedStart, bookedStart + interval.duration + input.intervalMinutes);
+        && overlaps(start, end, bookedStart, bookedStart + interval.duration);
     });
     return occupied ? { time, status: 'occupied', reason: 'Ocupado' } : { time, status: 'available' };
   });
