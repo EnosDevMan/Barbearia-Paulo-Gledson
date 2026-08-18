@@ -23,22 +23,22 @@ describe('resolveDailyHours', () => {
 
 describe('generateSlotStartMinutes', () => {
   it.each([
-    { interval: 5, expected: [540, 545, 550, 555, 560, 565, 570, 575, 580, 585, 590, 595, 600, 605, 610, 615, 620, 625] },
-    { interval: 10, expected: [540, 550, 560, 570, 580, 590, 600, 610, 620] },
-    { interval: 15, expected: [540, 555, 570, 585, 600, 615] },
-    { interval: 20, expected: [540, 560, 580, 600] },
-    { interval: 30, expected: [540, 570, 600] },
+    { interval: 5, expected: [540, 545, 550, 555, 560, 565, 570, 575, 580, 585, 590, 595, 600, 605, 610, 615, 620, 625, 630] },
+    { interval: 10, expected: [540, 550, 560, 570, 580, 590, 600, 610, 620, 630] },
+    { interval: 15, expected: [540, 555, 570, 585, 600, 615, 630] },
+    { interval: 20, expected: [540, 560, 580, 600, 620] },
+    { interval: 30, expected: [540, 570, 600, 630] },
   ])('avança somente o intervalo de $interval minutos definido no admin', ({ interval, expected }) => {
     expect(generateSlotStartMinutes(540, 660, 30, interval)).toEqual(expected);
   });
 
-  it('não oferece um horário cujo serviço e intervalo ultrapassem o fechamento', () => {
-    expect(generateSlotStartMinutes(540, 639, 30, 10)).toEqual([540, 550, 560, 570, 580, 590]);
+  it('não oferece um horário cujo serviço ultrapasse o fechamento', () => {
+    expect(generateSlotStartMinutes(540, 639, 30, 10)).toEqual([540, 550, 560, 570, 580, 590, 600]);
   });
 
   it('mantém a mesma grade para serviços de durações diferentes', () => {
-    expect(generateSlotStartMinutes(540, 660, 20, 15)).toEqual([540, 555, 570, 585, 600, 615]);
-    expect(generateSlotStartMinutes(540, 660, 45, 15)).toEqual([540, 555, 570, 585, 600]);
+    expect(generateSlotStartMinutes(540, 660, 20, 15)).toEqual([540, 555, 570, 585, 600, 615, 630]);
+    expect(generateSlotStartMinutes(540, 660, 45, 15)).toEqual([540, 555, 570, 585, 600, 615]);
   });
 
   it('rejeita configurações que não podem produzir horários válidos', () => {
@@ -70,6 +70,10 @@ describe('getAvailability', () => {
     expect(getAvailability(input).find(slot => slot.time === '09:00')?.status).toBe('occupied');
   });
 
+  it('libera 09:30 após um serviço de 30 min iniciado às 09:00', () => {
+    expect(getAvailability(input).find(slot => slot.time === '09:30')?.status).toBe('available');
+  });
+
   it('ignora somente o próprio agendamento durante o reagendamento', () => {
     expect(getAvailability({ ...input, excludeBookingId: 'booking-1' }).find(slot => slot.time === '09:00')?.status).toBe('available');
   });
@@ -92,7 +96,7 @@ describe('getAvailability', () => {
       intervalMinutes: 30,
     });
 
-    expect(slots.map(slot => slot.time)).toEqual(['09:00', '09:30']);
+    expect(slots.map(slot => slot.time)).toEqual(['09:00', '09:30', '10:00']);
   });
 
   it('limita o horário especial do barbeiro ao funcionamento do salão', () => {
@@ -106,7 +110,7 @@ describe('getAvailability', () => {
       ],
     });
 
-    expect(slots.map(slot => slot.time)).toEqual(['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00']);
+    expect(slots.map(slot => slot.time)).toEqual(['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30']);
   });
 
   it('não deixa um horário individual abrir um dia em que o salão está fechado', () => {
