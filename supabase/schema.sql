@@ -345,8 +345,12 @@ declare
   v_interval int;
   v_booking_window_days int;
   v_hours jsonb;
-  v_special_hours jsonb;
+  v_shop_hours jsonb;
+  v_barber_hours jsonb;
+  v_shop_special_hours jsonb;
+  v_barber_special_hours jsonb;
   v_barber_active boolean;
+  v_barber_inherits_shop_hours boolean;
   v_start_mins int;
   v_end_mins int;
   v_open_mins int;
@@ -436,8 +440,8 @@ begin
   -- O preço exibido pelo navegador nunca é fonte de verdade.
   new.value := v_price;
 
-  select b.active, coalesce(b.working_hours, c.working_hours), c.interval_minutes, c.booking_window_days
-    into v_barber_active, v_hours, v_interval, v_booking_window_days
+  select b.active, b.working_hours is null, coalesce(b.working_hours, c.working_hours), c.working_hours, c.interval_minutes, c.booking_window_days
+    into v_barber_active, v_barber_inherits_shop_hours, v_barber_hours, v_shop_hours, v_interval, v_booking_window_days
   from barbers b cross join barbershop_config c
   where b.id = new.barber_id and c.id = true;
 
@@ -457,62 +461,83 @@ begin
     v_start_mins := extract(hour from new.time) * 60 + extract(minute from new.time);
   end if;
 
-  select sb.special_hours into v_special_hours
+  v_weekday := extract(dow from new.date);
+
+  -- Resolve the shop's regular weekday first. A salon-wide special schedule
+  -- may replace it, while an individual special schedule can only narrow it.
+  select sb.special_hours into v_shop_special_hours
   from schedule_blocks sb
   where sb.type = 'special' and sb.special_hours is not null
-    and sb.date = new.date
-    and (sb.barber_id = 'all' or sb.barber_id = new.barber_id::text)
-  order by case when sb.barber_id = new.barber_id::text then 0 else 1 end
+    and sb.date = new.date and sb.barber_id = 'all'
   limit 1;
 
-  if v_special_hours is not null then
-    v_hours := v_special_hours;
-  else
-    v_weekday := extract(dow from new.date);
+  if v_shop_special_hours is not null then
+    v_shop_hours := v_shop_special_hours;
+  elsif v_shop_hours->'weeklySchedule'->(v_weekday::text) is not null then
+    if coalesce(
+      (v_shop_hours->'weeklySchedule'->(v_weekday::text)->>'closed')::boolean,
+      not exists (select 1 from jsonb_array_elements_text(coalesce(v_shop_hours->'daysOpen', '[]'::jsonb)) d where d::int = v_weekday)
+    ) then
+      raise exception 'A barbearia está fechada nesta data.';
+    end if;
+    v_shop_hours := v_shop_hours || (v_shop_hours->'weeklySchedule'->(v_weekday::text));
+  elsif not exists (select 1 from jsonb_array_elements_text(coalesce(v_shop_hours->'daysOpen', '[]'::jsonb)) d where d::int = v_weekday) then
+    raise exception 'A barbearia está fechada nesta data.';
+  end if;
 
-    -- weeklySchedule usa as chaves JSON "0" a "6". Configurações
-    -- anteriores possuem apenas daysOpen/open/close, por isso mantemos o
-    -- fallback legado. Quando existe uma entrada diária, ela define tanto o
-    -- estado aberto/fechado quanto os horários daquele dia.
-    if v_hours->'weeklySchedule'->(v_weekday::text) is not null then
-      if coalesce(
-        (v_hours->'weeklySchedule'->(v_weekday::text)->>'closed')::boolean,
-        not exists (
-          select 1 from jsonb_array_elements_text(coalesce(v_hours->'daysOpen', '[]'::jsonb)) d
-          where d::int = v_weekday
-        )
-      ) then
-        raise exception 'O profissional não trabalha nesta data.';
-      end if;
-      v_hours := v_hours || (v_hours->'weeklySchedule'->(v_weekday::text));
-    elsif not exists (
-      select 1 from jsonb_array_elements_text(coalesce(v_hours->'daysOpen', '[]'::jsonb)) d
-      where d::int = v_weekday
+  select sb.special_hours into v_barber_special_hours
+  from schedule_blocks sb
+  where sb.type = 'special' and sb.special_hours is not null
+    and sb.date = new.date and sb.barber_id = new.barber_id::text
+  limit 1;
+
+  if v_barber_special_hours is not null then
+    v_barber_hours := v_barber_special_hours;
+  elsif v_barber_inherits_shop_hours then
+    -- Inherit the already resolved shop schedule, including a shop-wide
+    -- exception that opens a weekday which is normally closed.
+    v_barber_hours := v_shop_hours;
+  elsif v_barber_hours->'weeklySchedule'->(v_weekday::text) is not null then
+    if coalesce(
+      (v_barber_hours->'weeklySchedule'->(v_weekday::text)->>'closed')::boolean,
+      not exists (select 1 from jsonb_array_elements_text(coalesce(v_barber_hours->'daysOpen', '[]'::jsonb)) d where d::int = v_weekday)
     ) then
       raise exception 'O profissional não trabalha nesta data.';
     end if;
+    v_barber_hours := v_barber_hours || (v_barber_hours->'weeklySchedule'->(v_weekday::text));
+  elsif not exists (select 1 from jsonb_array_elements_text(coalesce(v_barber_hours->'daysOpen', '[]'::jsonb)) d where d::int = v_weekday) then
+    raise exception 'O profissional não trabalha nesta data.';
   end if;
 
-  v_open_mins := split_part(v_hours->>'open', ':', 1)::int * 60
-                 + split_part(v_hours->>'open', ':', 2)::int;
-  v_close_mins := split_part(v_hours->>'close', ':', 1)::int * 60
-                  + split_part(v_hours->>'close', ':', 2)::int;
+  -- Intersection: the professional may reduce their availability, never
+  -- extend the barbershop's opening and closing hours.
+  v_hours := v_barber_hours;
+  v_open_mins := greatest(
+    split_part(v_shop_hours->>'open', ':', 1)::int * 60 + split_part(v_shop_hours->>'open', ':', 2)::int,
+    split_part(v_barber_hours->>'open', ':', 1)::int * 60 + split_part(v_barber_hours->>'open', ':', 2)::int
+  );
+  v_close_mins := least(
+    split_part(v_shop_hours->>'close', ':', 1)::int * 60 + split_part(v_shop_hours->>'close', ':', 2)::int,
+    split_part(v_barber_hours->>'close', ':', 1)::int * 60 + split_part(v_barber_hours->>'close', ':', 2)::int
+  );
   v_end_mins := v_start_mins + v_duration + coalesce(v_interval, 0);
   if v_start_mins < v_open_mins or v_end_mins > v_close_mins then
     raise exception 'Horário fora do expediente do profissional.';
   end if;
 
-  if v_hours->>'breakStart' is not null and v_hours->>'breakEnd' is not null
-     and (split_part(v_hours->>'breakStart', ':', 1)::int * 60
-          + split_part(v_hours->>'breakStart', ':', 2)::int) < v_end_mins
-     and (split_part(v_hours->>'breakEnd', ':', 1)::int * 60
-          + split_part(v_hours->>'breakEnd', ':', 2)::int) > v_start_mins then
-    raise exception 'Horário coincide com o intervalo do profissional.';
+  if (v_barber_hours->>'breakStart' is not null and v_barber_hours->>'breakEnd' is not null
+       and (split_part(v_barber_hours->>'breakStart', ':', 1)::int * 60 + split_part(v_barber_hours->>'breakStart', ':', 2)::int) < v_end_mins
+       and (split_part(v_barber_hours->>'breakEnd', ':', 1)::int * 60 + split_part(v_barber_hours->>'breakEnd', ':', 2)::int) > v_start_mins)
+     or (v_shop_hours->>'breakStart' is not null and v_shop_hours->>'breakEnd' is not null
+       and (split_part(v_shop_hours->>'breakStart', ':', 1)::int * 60 + split_part(v_shop_hours->>'breakStart', ':', 2)::int) < v_end_mins
+       and (split_part(v_shop_hours->>'breakEnd', ':', 1)::int * 60 + split_part(v_shop_hours->>'breakEnd', ':', 2)::int) > v_start_mins) then
+    raise exception 'Horário coincide com um intervalo indisponível.';
   end if;
 
   return new;
 end;
 $$;
+
 
 
 -- Permite que o barbeiro edite a PRÓPRIA linha em `barbers` (tela "Meu
