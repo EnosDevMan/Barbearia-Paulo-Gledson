@@ -74,6 +74,16 @@ describe('getAvailability', () => {
     expect(getAvailability({ ...input, excludeBookingId: 'booking-1' }).find(slot => slot.time === '09:00')?.status).toBe('available');
   });
 
+  it('respeita a duração real de intervalos ocupados ainda não persistidos', () => {
+    const slots = getAvailability({
+      ...input,
+      bookings: [],
+      additionalOccupiedIntervals: [{ time: '09:00', duration: 60 }],
+    });
+
+    expect(slots.find(slot => slot.time === '09:30')?.status).toBe('occupied');
+  });
+
   it('oferece candidatos na grade do admin, não na duração do serviço', () => {
     const slots = getAvailability({
       ...input,

@@ -28,8 +28,7 @@ export const useAppStore = () => {
     excludeBookingId?: string
   ): boolean => {
     const barber = dataState.barbers.find(item => item.id === barberId);
-    const syntheticBookings = extraBookedIntervals.map((item, index) => ({ id: `extra-${index}`, customerId: '', customerName: '', customerPhone: '', barberId, serviceId: '', date, time: item.time, status: 'Confirmado' as const, feePaid: true, value: 0, createdAt: '' }));
-    const slots = getAvailability({ barberId, date, duration, intervalMinutes: configState.config.intervalMinutes, shopHours: configState.config.workingHours, barber, bookings: [...dataState.bookings, ...syntheticBookings], blocks: dataState.scheduleBlocks, services: dataState.services, excludeBookingId });
+    const slots = getAvailability({ barberId, date, duration, intervalMinutes: configState.config.intervalMinutes, shopHours: configState.config.workingHours, barber, bookings: dataState.bookings, blocks: dataState.scheduleBlocks, services: dataState.services, excludeBookingId, additionalOccupiedIntervals: extraBookedIntervals });
     return slots.some(slot => slot.time === time && slot.status === 'available');
   }, [dataState.barbers, dataState.bookings, dataState.scheduleBlocks, dataState.services, configState.config]);
 
