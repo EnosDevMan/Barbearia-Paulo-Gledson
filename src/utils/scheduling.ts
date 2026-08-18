@@ -20,6 +20,8 @@ export interface AvailabilityInput {
   blocks: ScheduleBlock[];
   services: Service[];
   excludeBookingId?: string;
+  /** Intervals not persisted as bookings yet (for previews and batch creation). */
+  additionalOccupiedIntervals?: { time: string; duration: number }[];
   /** Use this only in customer flows; admin schedules should also show elapsed slots. */
   unavailableBeforeMinutes?: number;
 }
@@ -107,6 +109,10 @@ export function getAvailability(input: AvailabilityInput): AvailabilitySlot[] {
       if (booking.id === input.excludeBookingId || booking.status === 'Cancelado' || booking.barberId !== input.barberId || booking.date !== input.date) return false;
       const bookedStart = timeToMinutes(booking.time);
       return overlaps(start, end, bookedStart, bookedStart + bookingDuration(booking, input.services) + input.intervalMinutes);
+    }) || (input.additionalOccupiedIntervals ?? []).some(interval => {
+      const bookedStart = timeToMinutes(interval.time);
+      return interval.duration > 0
+        && overlaps(start, end, bookedStart, bookedStart + interval.duration + input.intervalMinutes);
     });
     return occupied ? { time, status: 'occupied', reason: 'Ocupado' } : { time, status: 'available' };
   });
